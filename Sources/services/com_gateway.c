@@ -32,8 +32,7 @@
 #define COM_CHECKSUM_BYTE             7U	//REQ-COM-006, REQ-ECU6-003
 #define COM_ALIVE_COUNTER_MASK        0x0FU	//REQ-COM-006
 #define COM_CHECKSUM_RECOVERY_VALID_LIMIT  5U
-#define COM_BLOCKED_LOG_INITIAL_LIMIT      5U
-#define COM_BLOCKED_LOG_PERIOD             16U
+#define COM_SUPERVISION_LOG_PERIOD_MS      1000U
 
 #define GATEWAY_RX_MASK_ECU1          (1U << 0U)
 #define GATEWAY_RX_MASK_ECU2          (1U << 1U)
@@ -112,15 +111,18 @@ typedef struct
 	bool aliveInitialized;
 	bool checksumError;
 	uint8_t checksumRecoveryCnt;
+	TickType_t timeoutLogTick;
+	TickType_t checksumLogTick;
+	TickType_t aliveLogTick;
 } ComRxMonitor_t;
 
 //  REQ-ECU6-001 핵심 여기에 없는 ID가 들어오면 unknown ID
 static ComRxMonitor_t rxMonitors[] = {
-	{ CAN_ID_ECU1_BODY,   1U, GATEWAY_RX_MASK_ECU1, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U },
-	{ CAN_ID_ECU2_POWER,  2U, GATEWAY_RX_MASK_ECU2, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U },
-	{ CAN_ID_ECU3_SENSOR, 3U, GATEWAY_RX_MASK_ECU3, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U },
-	{ CAN_ID_ECU4_CLUSTER,4U, GATEWAY_RX_MASK_ECU4, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U },
-	{ CAN_ID_ECU5_DIAG,   5U, GATEWAY_RX_MASK_ECU5, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U }
+	{ CAN_ID_ECU1_BODY,   1U, GATEWAY_RX_MASK_ECU1, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U, 0U, 0U, 0U },
+	{ CAN_ID_ECU2_POWER,  2U, GATEWAY_RX_MASK_ECU2, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U, 0U, 0U, 0U },
+	{ CAN_ID_ECU3_SENSOR, 3U, GATEWAY_RX_MASK_ECU3, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U, 0U, 0U, 0U },
+	{ CAN_ID_ECU4_CLUSTER,4U, GATEWAY_RX_MASK_ECU4, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U, 0U, 0U, 0U },
+	{ CAN_ID_ECU5_DIAG,   5U, GATEWAY_RX_MASK_ECU5, 0U, COM_RX_TIMEOUT_MS, false, 0U, 0U, COM_ALIVE_FREEZE_LIMIT, false, false, false, 0U, 0U, 0U, 0U }
 };
 
 static uint8_t gatewayState = GATEWAY_STATE_INIT;
@@ -128,6 +130,8 @@ static uint8_t otaState = OTA_STATE_IDLE;
 static bool securityUnlocked = false;
 static bool securityLocked = true;
 static uint8_t blockedMsgCnt = 0U;
+static TickType_t blockedMsgLastLogTick = 0U;
+static bool blockedMsgLogInitialized = false;
 static uint8_t securityErrorCounter = 0U;
 static uint8_t securityFailureStreak = 0U;
 static bool securityLockoutActive = false;
