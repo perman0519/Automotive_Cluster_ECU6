@@ -1,0 +1,71 @@
+; ============================================================================
+; ECU6 scheduler evidence TRACE32 script
+; Requirement:
+;   REQ-COM-004 - 10 ms / 100 ms / 1000 ms scheduler evidence
+;
+; Usage:
+;   1. Build Debug_FLASH so Automotive_Cluster.elf contains the scheduler symbols.
+;   2. Flash/run or attach to the running ECU6 target.
+;   3. Run: DO cmm\scheduler_evidence.cmm
+;   4. Capture screenshots at T0, after about 1 s, and after about 10 s.
+;
+; Expected evidence:
+;   - gComScheduler10msCount increases about 100 counts per second.
+;   - gComScheduler100msCount increases about 10 counts per second.
+;   - gComScheduler1000msCount increases about 1 count per second.
+;   - gComSchedulerLastCycle10ms rolls 1..99 and resets after the 1000 ms hook.
+; ============================================================================
+
+PRIVATE &PROJECT_ROOT
+PRIVATE &ELF_FILE
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+AREA.RESet
+AREA.Create ECU6_Scheduler_Evidence
+AREA.Select ECU6_Scheduler_Evidence
+
+PRINT "ECU6 scheduler_evidence.cmm"
+PRINT "Capture counter values at T0, T0+1s, and T0+10s."
+
+IF OS.FILE("&ELF_FILE")
+(
+  Data.LOAD.Elf &ELF_FILE /NoCODE
+)
+
+Break.Delete
+Break.Set vComSchedulerTask /Program
+Break.Set COM_Task10ms /Program
+Break.Set COM_Task100ms /Program
+
+WinPOS 0. 0. 74. 35. 0. 0. W001
+List.Mix vComSchedulerTask
+
+WinPOS 75. 0. 55. 35. 0. 0. W002
+Var.Watch
+VAR.ADDWATCH gComScheduler10msCount
+VAR.ADDWATCH gComScheduler100msCount
+VAR.ADDWATCH gComScheduler1000msCount
+VAR.ADDWATCH gComSchedulerLastCycle10ms
+
+WinPOS 0. 36. 50. 16. 0. 0. W003
+Break.List
+
+WinPOS 51. 36. 39. 16. 0. 0. W004
+Register.view
+
+WinPOS 91. 36. 39. 16. 0. 0. W005
+SYStem.state
+
+PRINT "After the first scheduler break, use these manual commands:"
+PRINT "  Break.DISable vComSchedulerTask"
+PRINT "  Break.DISable COM_Task10ms"
+PRINT "  Go"
+PRINT "Then capture Var.Watch counter growth. Add COM_Task1000ms manually if needed."
+
+Go

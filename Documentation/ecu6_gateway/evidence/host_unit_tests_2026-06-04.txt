@@ -1,0 +1,33 @@
+ECU6 host-side unit test evidence
+Date: 2026-06-04 09:24 KST
+Runner: C:\Users\JunsangS\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe
+Command:
+  python -m unittest discover -s Tests/host -p "test_*.py" -v
+
+Result:
+  test_alive_counter_freeze_and_recovery ... ok
+  test_checksum_calculation_and_validation ... ok
+  test_ota_checksum_failure_keeps_version ... ok
+  test_ota_checksum_success_and_activation ... ok
+  test_security_lockout_and_recovery ... ok
+  test_seed_key_unlock_and_start_gate ... ok
+  test_source_constants_match_host_model ... ok
+  test_timeout_detection_and_recovery ... ok
+  test_unknown_id_increments_blocked_counter ... ok
+
+Summary:
+  Ran 9 tests in 0.015s
+  OK
+
+Covered logic:
+  - primary status XOR checksum calculation and validation
+  - unknown CAN ID blocked counter
+  - alive counter freeze detection and recovery
+  - monitored ECU timeout detection and recovery
+  - OTA seed/key unlock and START security gate
+  - OTA payload checksum success/failure behavior
+  - security lockout and timeout recovery
+
+Source:
+  Tests/host/test_ecu6_gateway_logic.py
+

@@ -1,0 +1,30 @@
+; ============================================================================
+; Automotive Cluster TRACE32 main source view helper
+; ============================================================================
+
+PRIVATE &PROJECT_ROOT
+PRIVATE &ELF_FILE
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+
+IF OS.FILE("&ELF_FILE")
+(
+  Data.LOAD.Elf &ELF_FILE /NoCODE
+)
+
+WinPOS 0. 0. 84. 41. 0. 0. W001
+List.Mix main
+
+WinPOS 85. 0. 45. 19. 0. 0. W002
+Register.view
+
+WinPOS 85. 20. 45. 21. 0. 0. W003
+Break.List
+
+ENDDO

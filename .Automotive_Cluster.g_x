@@ -1,0 +1,150 @@
+<CodeGenerationInfo>
+  <ToolchainSettings>
+    <option>
+      <name>PE_G_4PEx_ToolChain_C_Compiler_Includes</name>
+      <values lines_count="11">
+        <Line>"${S32_SDK_PATH}/platform/drivers/src/clock/MPC57xx"</Line>
+        <Line>"${S32_SDK_PATH}/rtos/FreeRTOS_PA/Source/include"</Line>
+        <Line>"${S32_SDK_PATH}/rtos/FreeRTOS_PA/Source/portable/GCC/PowerPC"</Line>
+        <Line>"${S32_SDK_PATH}/rtos/osif/"</Line>
+        <Line>"${S32_SDK_PATH}/platform/pal/inc"</Line>
+        <Line>"${S32_SDK_PATH}/platform/pal/inc"</Line>
+        <Line>"${S32_SDK_PATH}/platform/devices"</Line>
+        <Line>"${S32_SDK_PATH}/platform/devices/common"</Line>
+        <Line>"${S32_SDK_PATH}/platform/devices/MPC5748G/include"</Line>
+        <Line>"${S32_SDK_PATH}/platform/devices/MPC5748G/startup"</Line>
+        <Line>"${S32_SDK_PATH}/platform/drivers/inc"</Line>
+      </values>
+    </option>
+    <option>
+      <name>PE_G_4PEx_ToolChain_C_Compiler_Symbols</name>
+      <values lines_count="2">
+        <Line>USING_OS_FREERTOS</Line>
+        <Line>CPU_MPC5748G</Line>
+      </values>
+    </option>
+    <option>
+      <name>PE_G_4PEx_ToolChain_C_Assembler_Symbols</name>
+      <values lines_count="2">
+        <Line>USING_OS_FREERTOS</Line>
+        <Line>CPU_MPC5748G</Line>
+      </values>
+    </option>
+    <option>
+      <name>PE_G_4PEx_ilg_gnuarmeclipse_managedbuild_cross_option_c_compiler_defs</name>
+      <values lines_count="1">
+        <Line>"CPU_MPC5748G_176"</Line>
+      </values>
+    </option>
+  </ToolchainSettings>
+  <GeneratedFilesList>
+    <GeneratedByPE>
+      <File Name="Generated_Code/FreeRTOSConfig.h" FileDate="2026-05-21, 13:04:37" FileAge="1779336277190" FileType="45637" CompNumb="3" />
+      <File Name="SDK/platform/drivers/src/linflexd/linflexd_uart_driver.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Project_Settings/Linker_Files/linker_flash.ld" FileDate="2019-06-25, 04:49:08" FileAge="1561405748000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/edma/edma_hw_access.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/flexcan/flexcan_irq.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/mpu_prototypes.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/edma/edma_hw_access.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/flexcan/flexcan_irq.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/pal/src/uart/uart_pal.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/inc/clock.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Documentation/Automotive_Cluster_Settings.xml" FileDate="2026-05-21, 11:28:03" FileAge="1779330483431" FileType="3072" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/portable/GCC/PowerPC/portmacro.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/pal/inc/can_pal_mapping.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Project_Settings/Startup_Code/core0_intc_sw_handlers.S" FileDate="2019-06-25, 04:49:08" FileAge="1561405748000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/pins/siul2/pins_siul2_driver.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/FreeRTOS.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/edma/edma_irq.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/pins/siul2/pins_siul2_driver.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/croutine.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/edma/edma_irq.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/stream_buffer.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/portable/MemMang/heap_2.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/semphr.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Generated_Code/FreeRTOS.c" FileDate="1970-01-01, 08:59:59" FileAge="-1" FileType="45637" CompNumb="3" />
+      <File Name="Generated_Code/can_pal1.h" FileDate="2026-05-21, 11:28:03" FileAge="1779330483248" FileType="45637" CompNumb="13" />
+      <File Name="SDK/platform/drivers/src/linflexd/linflexd_uart_irq.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/devices/devassert.h" FileDate="2019-06-25, 04:49:04" FileAge="1561405744000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/flexcan/flexcan_hw_access.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Generated_Code/can_pal1.c" FileDate="2026-05-21, 11:28:03" FileAge="1779330483248" FileType="45637" CompNumb="13" />
+      <File Name="SDK/platform/drivers/src/pins/siul2/siul2_hw_access.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/portable/GCC/PowerPC/portasm.s" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/devices/status.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/linflexd/linflexd_uart_irq.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/event_groups.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/inc/edma_driver.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/flexcan/flexcan_hw_access.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/pins/siul2/siul2_hw_access.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/devices/MPC5748G/include/MPC5748G_features.h" FileDate="2019-06-25, 04:49:08" FileAge="1561405748000" FileType="262144" />
+      <File Name="SDK/platform/drivers/inc/interrupt_manager.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/devices/common/s32_core_e200.h" FileDate="2019-06-25, 04:49:04" FileAge="1561405744000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/timers.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/clock/MPC57xx/cgm_hw_access.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/event_groups.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/clock/MPC57xx/mc_me_hw_access.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/devices/device_registers.h" FileDate="2019-06-25, 04:49:04" FileAge="1561405744000" FileType="262144" />
+      <File Name="Generated_Code/clockMan1.h" FileDate="2026-05-20, 10:30:47" FileAge="1779240647806" FileType="45637" CompNumb="9" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/portable/GCC/PowerPC/port.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/inc/clock_manager.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Generated_Code/clockMan1.c" FileDate="2026-05-21, 11:28:03" FileAge="1779330483296" FileType="45637" CompNumb="9" />
+      <File Name="SDK/platform/drivers/src/interrupt/interrupt_manager_MPC57xx.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Generated_Code/Cpu.h" FileDate="2026-05-21, 11:28:03" FileAge="1779330483343" FileType="45637" CompNumb="2" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/stack_macros.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Generated_Code/pin_mux.h" FileDate="2026-06-04, 11:00:25" FileAge="1780538425226" FileType="45637" CompNumb="8" />
+      <File Name="Generated_Code/Cpu.c" FileDate="2026-05-20, 10:30:47" FileAge="1779240647774" FileType="45637" CompNumb="2" />
+      <File Name="Generated_Code/uart_pal1.h" FileDate="2026-05-21, 09:26:34" FileAge="1779323194581" FileType="45637" CompNumb="10" />
+      <File Name="SDK/platform/pal/src/can/can_pal.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Generated_Code/pin_mux.c" FileDate="2026-06-04, 11:00:25" FileAge="1780538425239" FileType="45637" CompNumb="8" />
+      <File Name="Generated_Code/uart_pal1.c" FileDate="2026-05-21, 09:26:34" FileAge="1779323194588" FileType="45637" CompNumb="10" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/portable.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/mpu_wrappers.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Sources/main.c" FileDate="2026-06-04, 11:00:25" FileAge="1780538425263" FileType="128" />
+      <File Name="SDK/platform/devices/MPC5748G/startup/system_MPC5748G.h" FileDate="2019-06-25, 04:49:08" FileAge="1561405748000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/projdefs.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/clock/MPC57xx/cmu_hw_access.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Project_Settings/Linker_Files/linker_ram.ld" FileDate="2019-06-25, 04:49:08" FileAge="1561405748000" FileType="262144" />
+      <File Name="SDK/platform/devices/MPC5748G/startup/system_MPC5748G.c" FileDate="2019-06-25, 04:49:08" FileAge="1561405748000" FileType="262144" />
+      <File Name="Documentation/Automotive_Cluster.txt" FileDate="2026-05-21, 11:28:03" FileAge="1779330483470" FileType="3072" />
+      <File Name="SDK/platform/devices/callbacks.h" FileDate="2019-06-25, 04:49:04" FileAge="1561405744000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/croutine.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/portable/GCC/PowerPC/cpu_defines.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/pal/inc/can_pal.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/devices/startup.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/inc/flexcan_driver.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Generated_Code/dmaController1.h" FileDate="2026-05-20, 11:17:02" FileAge="1779243422009" FileType="45637" CompNumb="12" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/StackMacros.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/inc/linflexd_uart_driver.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/devices/startup.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Project_Settings/Startup_Code/interrupt_vectors.S" FileDate="2019-06-25, 04:49:08" FileAge="1561405748000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/queue.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Generated_Code/dmaController1.c" FileDate="2026-05-20, 11:17:01" FileAge="1779243421989" FileType="45637" CompNumb="12" />
+      <File Name="Generated_Code/can_pal_cfg.h" FileDate="2026-05-21, 11:28:03" FileAge="1779330483248" FileType="45637" CompNumb="2" />
+      <File Name="SDK/rtos/osif/osif.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/deprecated_definitions.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/clock/MPC57xx/clock_MPC57xx.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/linflexd/linflexd_hw_access.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/message_buffer.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/list.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/portable/GCC/PowerPC/porttimer.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/clock/MPC57xx/clock_MPC57xx.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/devices/MPC5748G/include/MPC5748G.h" FileDate="2019-06-25, 04:49:08" FileAge="1561405748000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/edma/edma_driver.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/inc/pins_driver.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/timers.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/pal/inc/uart_pal.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/task.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/list.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="Project_Settings/Startup_Code/startup_MPC5748G.S" FileDate="2019-06-25, 04:49:08" FileAge="1561405748000" FileType="262144" />
+      <File Name="Generated_Code/uart_pal_cfg.h" FileDate="2026-05-21, 11:28:03" FileAge="1779330483343" FileType="45637" CompNumb="2" />
+      <File Name="SDK/platform/pal/inc/uart_pal_mapping.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/flexcan/flexcan_driver.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/platform/drivers/src/clock/MPC57xx/cgmcs_hw_access.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/queue.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/tasks.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/FreeRTOS_PA/Source/include/stream_buffer.h" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+      <File Name="SDK/rtos/osif/osif_freertos.c" FileDate="2019-06-25, 04:49:10" FileAge="1561405750000" FileType="262144" />
+    </GeneratedByPE>
+  </GeneratedFilesList>
+  <CodeGenReference>16</CodeGenReference>
+</CodeGenerationInfo>

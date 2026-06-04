@@ -1,0 +1,70 @@
+; ============================================================================
+; ECU6 Gateway-focused TRACE32 script
+; Requirement: REQ-ECU6-016
+;
+; Focus:
+;   REQ-COM-005 timeout supervision
+;   REQ-COM-006 4-bit alive counter
+;   REQ-COM-007 checksum
+;   REQ-ECU6-001 allowed ID monitoring
+;   REQ-ECU6-002 unknown ID count/block
+;   REQ-ECU6-003 checksum validation
+;   REQ-ECU6-004 alive freeze detection
+;   REQ-ECU6-014 0x601 periodic GatewayStatus
+; ============================================================================
+
+PRIVATE &PROJECT_ROOT
+PRIVATE &ELF_FILE
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+AREA.RESet
+AREA.Create ECU6_Gateway
+AREA.Select ECU6_Gateway
+
+PRINT "ECU6 gateway_debug.cmm"
+
+IF OS.FILE("&ELF_FILE")
+(
+  Data.LOAD.Elf &ELF_FILE /NoCODE
+)
+
+Break.Delete
+Break.Set COM_GatewayHandleRxMessage /Program
+Break.Set COM_GatewayBuildStatusMessage /Program
+Break.Set CAN_SendMessage /Program
+
+WinPOS 0. 0. 74. 37. 0. 0. W001
+List.Mix COM_GatewayHandleRxMessage
+
+WinPOS 75. 0. 55. 37. 0. 0. W002
+Var.Watch
+VAR.ADDWATCH gatewayState
+VAR.ADDWATCH gatewayRxMask
+VAR.ADDWATCH blockedMsgCnt
+VAR.ADDWATCH aliveCounter
+VAR.ADDWATCH rxMonitors
+
+WinPOS 0. 38. 63. 17. 0. 0. W003
+Break.List
+
+WinPOS 64. 38. 32. 17. 0. 0. W004
+Register.view
+
+WinPOS 97. 38. 33. 17. 0. 0. W005
+SYStem.state
+
+PRINT "Gateway watch expectations:"
+PRINT " - gatewayRxMask reaches 0x1F after 0x101/0x201/0x301/0x401/0x501"
+PRINT " - blockedMsgCnt increments on unknown ID or checksum failure"
+PRINT " - gatewayState: 0=INIT, 1=NORMAL, 2=DEGRADED"
+PRINT " - aliveCounter wraps 0..15 in COM_GatewayBuildStatusMessage"
+PRINT " - rxMonitors[n].timeoutError/aliveError/checksumError show per-ECU faults"
+PRINT "Only 3 breakpoints are set. Add COM_GatewayCheckTimeouts manually if needed."
+
+Go

@@ -1,0 +1,90 @@
+; ============================================================================
+; ECU6 interrupt evidence TRACE32 script
+; Requirements:
+;   REQ-COM-001 - stable runtime and interrupt evidence
+;   REQ-COM-003 - CAN communication evidence
+;   REQ-ECU6-014 - periodic GatewayStatus 0x601 path
+;
+; Usage:
+;   1. Run board startup and load ELF, or run: DO cmm\init_debug.cmm
+;   2. Run this script: DO cmm\interrupt_evidence.cmm
+;   3. Capture screenshots when each breakpoint hits.
+;
+; Recommended screenshot set:
+;   A. vPortTickISR hit + Register.view + Break.List
+;   B. CAN0_ORed_*_MB_IRQHandler hit while CANoe sends 0x101..0x501/0x650
+;   C. COM_GatewayHandleRxMessage hit + gatewayRxMask/rxMonitors watch
+;   D. COM_GatewayBuildStatusMessage or CAN_SendMessage hit + 0x601 in CANoe
+; ============================================================================
+
+PRIVATE &PROJECT_ROOT
+PRIVATE &ELF_FILE
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+AREA.RESet
+AREA.Create ECU6_Interrupt_Evidence
+AREA.Select ECU6_Interrupt_Evidence
+
+PRINT "ECU6 interrupt_evidence.cmm"
+PRINT "Capture order:"
+PRINT " 1) First hit is usually vPortTickISR. Screenshot Register.view + Break.List."
+PRINT " 2) Disable the tick breakpoint, then Go and send CANoe frames."
+PRINT " 3) Screenshot CAN0_ORed_* ISR hit and gateway variable changes."
+PRINT " 4) Screenshot COM_GatewayBuildStatusMessage/CAN_SendMessage and CANoe 0x601 trace."
+
+IF OS.FILE("&ELF_FILE")
+(
+  Data.LOAD.Elf &ELF_FILE /NoCODE
+)
+
+Break.Delete
+
+; Keep the default set small to avoid exhausting hardware breakpoints.
+Break.Set vPortTickISR /Program
+Break.Set CAN0_ORed_00_03_MB_IRQHandler /Program
+Break.Set COM_GatewayHandleRxMessage /Program
+
+; Variables that prove the ISR path reached ECU6 gateway/OTA logic.
+WinPOS 0. 0. 64. 27. 0. 0. W001
+List.Mix CAN0_ORed_00_03_MB_IRQHandler
+
+WinPOS 65. 0. 65. 27. 0. 0. W002
+List.Mix COM_GatewayHandleRxMessage
+
+WinPOS 0. 28. 44. 17. 0. 0. W003
+Register.view
+
+WinPOS 45. 28. 44. 17. 0. 0. W004
+Break.List
+
+WinPOS 90. 28. 40. 17. 0. 0. W005
+Frame.view
+
+WinPOS 0. 46. 130. 18. 0. 0. W006
+Var.Watch
+VAR.ADDWATCH gatewayState
+VAR.ADDWATCH gatewayRxMask
+VAR.ADDWATCH blockedMsgCnt
+VAR.ADDWATCH aliveCounter
+VAR.ADDWATCH rxMonitors
+VAR.ADDWATCH otaState
+VAR.ADDWATCH otaResponseCounter
+VAR.ADDWATCH gComScheduler10msCount
+VAR.ADDWATCH gComScheduler100msCount
+VAR.ADDWATCH gComScheduler1000msCount
+
+PRINT "Suggested manual commands after the first tick screenshot:"
+PRINT "  Break.DISable vPortTickISR"
+PRINT "  Go"
+PRINT "Then send CANoe ECU frames and capture CAN0_ORed_* ISR hits."
+PRINT "After a CAN ISR screenshot, use Go again to capture COM_GatewayHandleRxMessage."
+PRINT "For 0x601 TX evidence, replace COM_GatewayHandleRxMessage with COM_GatewayBuildStatusMessage or CAN_SendMessage."
+PRINT "For OTA/CAN MB4..7 evidence, replace CAN0_ORed_00_03_MB_IRQHandler with CAN0_ORed_04_07_MB_IRQHandler manually."
+
+Go

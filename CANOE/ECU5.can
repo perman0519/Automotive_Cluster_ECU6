@@ -1,0 +1,71 @@
+/*@!Encoding:1252*/
+variables
+{
+  msTimer tDiagnostic;
+  message 0x501 DiagnosticStatus;
+
+  byte alive501 = 0;
+
+  byte currentSession = 1;
+  byte securityUnlocked = 0;
+  byte diagActive = 0;
+  byte activeDtcCount = 0;
+  byte lastServiceId = 0;
+  byte lastNrc = 0;
+}
+
+byte calcChecksum(long canId, byte d0, byte d1, byte d2, byte d3, byte d4, byte d5, byte d6)
+{
+  byte checksum;
+
+  checksum = (byte)(canId & 0xFF);
+  checksum = checksum ^ d0;
+  checksum = checksum ^ d1;
+  checksum = checksum ^ d2;
+  checksum = checksum ^ d3;
+  checksum = checksum ^ d4;
+  checksum = checksum ^ d5;
+  checksum = checksum ^ d6;
+
+  return checksum;
+}
+
+void sendDiagnosticStatus()
+{
+  DiagnosticStatus.dlc = 8;
+
+  DiagnosticStatus.byte(0) = currentSession;
+
+  DiagnosticStatus.byte(1) = 0;
+  DiagnosticStatus.byte(1) = DiagnosticStatus.byte(1) | ((securityUnlocked & 0x01) << 0);
+  DiagnosticStatus.byte(1) = DiagnosticStatus.byte(1) | ((diagActive & 0x01) << 1);
+
+  DiagnosticStatus.byte(2) = activeDtcCount;
+  DiagnosticStatus.byte(3) = lastServiceId;
+  DiagnosticStatus.byte(4) = lastNrc;
+  DiagnosticStatus.byte(5) = 0;
+  DiagnosticStatus.byte(6) = alive501 & 0x0F;
+  DiagnosticStatus.byte(7) = calcChecksum(0x501,
+                                          DiagnosticStatus.byte(0),
+                                          DiagnosticStatus.byte(1),
+                                          DiagnosticStatus.byte(2),
+                                          DiagnosticStatus.byte(3),
+                                          DiagnosticStatus.byte(4),
+                                          DiagnosticStatus.byte(5),
+                                          DiagnosticStatus.byte(6));
+
+  output(DiagnosticStatus);
+  alive501 = (alive501 + 1) & 0x0F;
+}
+
+on start
+{
+  sendDiagnosticStatus();
+  setTimer(tDiagnostic, 100);
+}
+
+on timer tDiagnostic
+{
+  sendDiagnosticStatus();
+  setTimer(tDiagnostic, 100);
+}

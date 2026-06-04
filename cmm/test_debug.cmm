@@ -1,0 +1,71 @@
+; ============================================================================
+; ECU6 basic runtime debug script for TRACE32 PowerView
+; Requirement: REQ-COM-010
+;
+; Use after cmm\init_debug.cmm has loaded the ELF and stopped at main.
+; This script sets the minimum review breakpoints and watches for CAN Tx/Rx,
+; GatewayStatus generation, timeout supervision, and ECU6 status variables.
+; ============================================================================
+
+PRIVATE &PROJECT_ROOT
+PRIVATE &ELF_FILE
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+AREA.RESet
+AREA.Create ECU6_Test
+AREA.Select ECU6_Test
+
+PRINT "ECU6 test_debug.cmm"
+
+IF OS.FILE("&ELF_FILE")
+(
+  Data.LOAD.Elf &ELF_FILE /NoCODE
+)
+
+Break.Delete
+Break.Set vCANTask /Program
+Break.Set COM_GatewayHandleRxMessage /Program
+Break.Set OTA_HandleRequestMessage /Program
+
+WinPOS 0. 0. 74. 37. 0. 0. W001
+List.Mix vCANTask
+
+WinPOS 75. 0. 55. 37. 0. 0. W002
+Var.Watch
+VAR.ADDWATCH gatewayState
+VAR.ADDWATCH gatewayRxMask
+VAR.ADDWATCH blockedMsgCnt
+VAR.ADDWATCH aliveCounter
+VAR.ADDWATCH otaState
+VAR.ADDWATCH lastOtaCommand
+VAR.ADDWATCH otaResponseCounter
+VAR.ADDWATCH rxMonitors
+VAR.ADDWATCH gComScheduler10msCount
+VAR.ADDWATCH gComScheduler100msCount
+VAR.ADDWATCH gComScheduler1000msCount
+VAR.ADDWATCH gComSchedulerLastCycle10ms
+
+WinPOS 0. 38. 41. 17. 0. 0. W003
+Register.view
+
+WinPOS 42. 38. 47. 17. 0. 0. W004
+Break.List
+
+WinPOS 90. 38. 40. 17. 0. 0. W005
+Frame.view
+
+PRINT "Review points:"
+PRINT " - vCANTask: CAN scheduler and 100 ms GatewayStatus path"
+PRINT " - COM_GatewayHandleRxMessage: allowed ID, unknown ID, checksum, alive"
+PRINT " - OTA_HandleRequestMessage: 0x650 request parser"
+PRINT " - scheduler counters: 10 ms / 100 ms / 1000 ms evidence"
+PRINT "Only 3 breakpoints are set to avoid hardware breakpoint exhaustion."
+PRINT "Add CAN_SendMessage manually if you need 0x601 TX wrapper evidence."
+
+Go

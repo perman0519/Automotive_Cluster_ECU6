@@ -1,0 +1,83 @@
+/*@!Encoding:1252*/
+variables
+{
+  msTimer tCluster;
+  message 0x401 ClusterStatus;
+
+  byte alive401 = 0;
+
+  byte clusterState = 1;
+  byte displayedSpeedKph = 60;
+  word displayedRpm = 3000;
+  byte doorWarningLamp = 0;
+  byte seatbeltWarningLamp = 0;
+  byte engineWarningLamp = 0;
+  byte sensorWarningLamp = 0;
+  byte batteryWarningLamp = 0;
+  byte diagModeLamp = 0;
+  byte otaModeLamp = 0;
+  byte failSafeLamp = 0;
+}
+
+byte calcChecksum(long canId, byte d0, byte d1, byte d2, byte d3, byte d4, byte d5, byte d6)
+{
+  byte checksum;
+
+  checksum = (byte)(canId & 0xFF);
+  checksum = checksum ^ d0;
+  checksum = checksum ^ d1;
+  checksum = checksum ^ d2;
+  checksum = checksum ^ d3;
+  checksum = checksum ^ d4;
+  checksum = checksum ^ d5;
+  checksum = checksum ^ d6;
+
+  return checksum;
+}
+
+void sendClusterStatus()
+{
+  ClusterStatus.dlc = 8;
+
+  ClusterStatus.byte(0) = clusterState;
+  ClusterStatus.byte(1) = displayedSpeedKph;
+  ClusterStatus.byte(2) = (byte)(displayedRpm / 50);
+
+  ClusterStatus.byte(3) = 0;
+  ClusterStatus.byte(3) = ClusterStatus.byte(3) | ((doorWarningLamp & 0x01) << 0);
+  ClusterStatus.byte(3) = ClusterStatus.byte(3) | ((seatbeltWarningLamp & 0x01) << 1);
+  ClusterStatus.byte(3) = ClusterStatus.byte(3) | ((engineWarningLamp & 0x01) << 2);
+  ClusterStatus.byte(3) = ClusterStatus.byte(3) | ((sensorWarningLamp & 0x01) << 3);
+  ClusterStatus.byte(3) = ClusterStatus.byte(3) | ((batteryWarningLamp & 0x01) << 4);
+
+  ClusterStatus.byte(4) = 0;
+  ClusterStatus.byte(4) = ClusterStatus.byte(4) | ((diagModeLamp & 0x01) << 0);
+  ClusterStatus.byte(4) = ClusterStatus.byte(4) | ((otaModeLamp & 0x01) << 1);
+  ClusterStatus.byte(4) = ClusterStatus.byte(4) | ((failSafeLamp & 0x01) << 2);
+
+  ClusterStatus.byte(5) = 0;
+  ClusterStatus.byte(6) = alive401 & 0x0F;
+  ClusterStatus.byte(7) = calcChecksum(0x401,
+                                       ClusterStatus.byte(0),
+                                       ClusterStatus.byte(1),
+                                       ClusterStatus.byte(2),
+                                       ClusterStatus.byte(3),
+                                       ClusterStatus.byte(4),
+                                       ClusterStatus.byte(5),
+                                       ClusterStatus.byte(6));
+
+  output(ClusterStatus);
+  alive401 = (alive401 + 1) & 0x0F;
+}
+
+on start
+{
+  sendClusterStatus();
+  setTimer(tCluster, 100);
+}
+
+on timer tCluster
+{
+  sendClusterStatus();
+  setTimer(tCluster, 100);
+}

@@ -1,0 +1,67 @@
+; ============================================================================
+; ECU6 Security TRACE32 script
+; Requirements: REQ-ECU6-010, REQ-ECU6-011, REQ-ECU6-013, REQ-ECU6-016
+;
+; Verifies seed/key security access, OTA_START security gate, and lockout.
+; ============================================================================
+
+PRIVATE &PROJECT_ROOT
+PRIVATE &ELF_FILE
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+AREA.RESet
+AREA.Create ECU6_Security
+AREA.Select ECU6_Security
+
+PRINT "ECU6 security_debug.cmm"
+PRINT "Watching seed/key unlock, OTA_START security gate, and 3-failure lockout."
+
+IF OS.FILE("&ELF_FILE")
+(
+  Data.LOAD.Elf &ELF_FILE /NoCODE
+)
+
+Break.Delete
+Break.Set OTA_HandleRequestMessage /Program
+Break.Set COM_GatewayBuildStatusMessage /Program
+
+WinPOS 0. 0. 74. 37. 0. 0. W001
+List.Mix OTA_HandleRequestMessage
+
+WinPOS 75. 0. 55. 37. 0. 0. W002
+Var.Watch
+VAR.ADDWATCH securityUnlocked
+VAR.ADDWATCH securityLocked
+VAR.ADDWATCH securityErrorCounter
+VAR.ADDWATCH securityFailureStreak
+VAR.ADDWATCH securityLockoutActive
+VAR.ADDWATCH securityLockoutStartTick
+VAR.ADDWATCH securitySeed
+VAR.ADDWATCH securitySeedIssued
+VAR.ADDWATCH lastOtaCommand
+VAR.ADDWATCH blockedMsgCnt
+
+WinPOS 0. 38. 63. 17. 0. 0. W003
+Break.List
+
+WinPOS 64. 38. 32. 17. 0. 0. W004
+Register.view
+
+WinPOS 97. 38. 33. 17. 0. 0. W005
+Frame.view
+
+PRINT "Security command bytes on 0x650:"
+PRINT " - 0x10 REQUEST_SEED: 0x651 Byte3 returns seed and locks OTA"
+PRINT " - 0x11 SEND_KEY: Byte2 must equal seed XOR 0xA5"
+PRINT " - 0x01 START before unlock: NACK detail 0x20"
+PRINT " - wrong key: NACK detail 0x22 and SecurityErrorCounter increments"
+PRINT " - after 3 failed key/auth attempts: lockout NACK detail 0x23"
+PRINT " - lockout timeout: 3000 ms, then REQUEST_SEED is accepted again"
+
+Go

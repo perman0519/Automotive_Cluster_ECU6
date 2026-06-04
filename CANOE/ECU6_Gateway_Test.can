@@ -1,0 +1,483 @@
+/*@!Encoding:1252*/
+variables
+{
+  byte gatewaySeen = 0;
+  byte lastGatewayAlive = 0xFF;
+  byte gatewayPassSeen = 0;
+  byte lastGatewayState = 0;
+  byte lastGatewayFlags = 0;
+  byte lastBlockedMsgCnt = 0;
+  byte lastGatewayRxMask = 0;
+  byte lastAliveError = 0;
+  byte lastChecksumError = 0;
+  byte otaResponseSeen = 0;
+  byte lastOtaResponseCode = 0;
+  byte lastOtaResponseCommand = 0;
+  byte lastOtaResponseSequence = 0;
+  byte lastOtaResponseDetail = 0;
+  byte lastOtaState = 0;
+  byte lastSecuritySeed = 0;
+
+  message 0x123 InvalidGatewayAttack;
+  message 0x301 BadSensorStatus;
+  message 0x650 OtaRequest;
+}
+
+byte calcChecksum(long canId, byte d0, byte d1, byte d2, byte d3, byte d4, byte d5, byte d6)
+{
+  byte checksum;
+
+  checksum = (byte)(canId & 0xFF);
+  checksum = checksum ^ d0;
+  checksum = checksum ^ d1;
+  checksum = checksum ^ d2;
+  checksum = checksum ^ d3;
+  checksum = checksum ^ d4;
+  checksum = checksum ^ d5;
+  checksum = checksum ^ d6;
+
+  return checksum;
+}
+
+on message 0x601
+{
+  byte gatewayState;
+  byte flags;
+  byte blockedMsgCnt;
+  byte gatewayRxMask;
+  byte gatewayAlive;
+  byte expectedChecksum;
+  byte aliveError;
+  byte checksumError;
+
+  gatewayState = this.byte(0);
+  flags = this.byte(1);
+  blockedMsgCnt = this.byte(2);
+  gatewayRxMask = this.byte(5);
+  gatewayAlive = this.byte(6) & 0x0F;
+
+  aliveError = (flags >> 5) & 0x01;
+  checksumError = (flags >> 6) & 0x01;
+
+  lastGatewayState = gatewayState;
+  lastGatewayFlags = flags;
+  lastOtaState = flags & 0x07;
+  lastBlockedMsgCnt = blockedMsgCnt;
+  lastGatewayRxMask = gatewayRxMask;
+  lastAliveError = aliveError;
+  lastChecksumError = checksumError;
+
+  expectedChecksum = calcChecksum(this.id,
+                                  this.byte(0),
+                                  this.byte(1),
+                                  this.byte(2),
+                                  this.byte(3),
+                                  this.byte(4),
+                                  this.byte(5),
+                                  this.byte(6));
+
+  if (this.byte(7) != expectedChecksum)
+  {
+    write("FAIL ECU6 0x601 checksum: rx=0x%02X expected=0x%02X", this.byte(7), expectedChecksum);
+    return;
+  }
+
+  if ((gatewaySeen != 0) && (((lastGatewayAlive + 1) & 0x0F) != gatewayAlive))
+  {
+    write("FAIL ECU6 0x601 alive sequence: last=%d now=%d", lastGatewayAlive, gatewayAlive);
+  }
+
+  gatewaySeen = 1;
+  lastGatewayAlive = gatewayAlive;
+
+  if ((gatewayState == 1) &&
+      (aliveError == 0) &&
+      (checksumError == 0) &&
+      (blockedMsgCnt == 0) &&
+      (gatewayRxMask == 0x1F))
+  {
+    gatewayPassSeen = 1;
+    write("PASS ECU6 Gateway NORMAL: state=%d flags=0x%02X blocked=%d rxMask=0x%02X alive=%d",
+          gatewayState,
+          flags,
+          blockedMsgCnt,
+          gatewayRxMask,
+          gatewayAlive);
+  }
+  else
+  {
+    write("WAIT/FAIL ECU6 Gateway: state=%d flags=0x%02X blocked=%d rxMask=0x%02X alive=%d",
+          gatewayState,
+          flags,
+          blockedMsgCnt,
+          gatewayRxMask,
+          gatewayAlive);
+  }
+}
+
+on message 0x651
+{
+  byte expectedChecksum;
+
+  expectedChecksum = calcChecksum(this.id,
+                                  this.byte(0),
+                                  this.byte(1),
+                                  this.byte(2),
+                                  this.byte(3),
+                                  this.byte(4),
+                                  this.byte(5),
+                                  this.byte(6));
+
+  if (this.byte(7) != expectedChecksum)
+  {
+    write("FAIL ECU6 0x651 checksum: rx=0x%02X expected=0x%02X", this.byte(7), expectedChecksum);
+    return;
+  }
+
+  otaResponseSeen = 1;
+  lastOtaResponseCode = this.byte(0);
+  lastOtaResponseCommand = this.byte(1);
+  lastOtaResponseSequence = this.byte(2);
+  lastOtaResponseDetail = this.byte(3);
+  lastOtaState = this.byte(4) & 0x07;
+
+  write("OBS ECU6 OTA response: code=0x%02X cmd=0x%02X detail=0x%02X state=%d",
+        this.byte(0),
+        this.byte(1),
+        this.byte(3),
+        this.byte(4));
+}
+
+void sendInvalidGatewayId()
+{
+  InvalidGatewayAttack.dlc = 8;
+  InvalidGatewayAttack.byte(0) = 0xAA;
+  InvalidGatewayAttack.byte(1) = 0x55;
+  InvalidGatewayAttack.byte(2) = 0x00;
+  InvalidGatewayAttack.byte(3) = 0x00;
+  InvalidGatewayAttack.byte(4) = 0x00;
+  InvalidGatewayAttack.byte(5) = 0x00;
+  InvalidGatewayAttack.byte(6) = 0x00;
+  InvalidGatewayAttack.byte(7) = 0x00;
+  output(InvalidGatewayAttack);
+}
+
+void sendBadSensorChecksum()
+{
+  byte validChecksum;
+
+  BadSensorStatus.dlc = 8;
+  BadSensorStatus.byte(0) = 65;
+  BadSensorStatus.byte(1) = 70;
+  BadSensorStatus.byte(2) = 125;
+  BadSensorStatus.byte(3) = 128;
+  BadSensorStatus.byte(4) = 0;
+  BadSensorStatus.byte(5) = 0;
+  BadSensorStatus.byte(6) = 9;
+
+  validChecksum = calcChecksum(0x301,
+                               BadSensorStatus.byte(0),
+                               BadSensorStatus.byte(1),
+                               BadSensorStatus.byte(2),
+                               BadSensorStatus.byte(3),
+                               BadSensorStatus.byte(4),
+                               BadSensorStatus.byte(5),
+                               BadSensorStatus.byte(6));
+
+  BadSensorStatus.byte(7) = validChecksum ^ 0xFF;
+  output(BadSensorStatus);
+}
+
+void sendOtaRequest(byte command, byte sequence)
+{
+  OtaRequest.dlc = 8;
+  OtaRequest.byte(0) = command;
+  OtaRequest.byte(1) = sequence;
+  OtaRequest.byte(2) = 0x00;
+  OtaRequest.byte(3) = 0x00;
+  OtaRequest.byte(4) = 0x00;
+  OtaRequest.byte(5) = 0x00;
+  OtaRequest.byte(6) = 0x00;
+  OtaRequest.byte(7) = 0x00;
+  output(OtaRequest);
+}
+
+void sendOtaRequestWithByte2(byte command, byte sequence, byte byte2)
+{
+  OtaRequest.dlc = 8;
+  OtaRequest.byte(0) = command;
+  OtaRequest.byte(1) = sequence;
+  OtaRequest.byte(2) = byte2;
+  OtaRequest.byte(3) = 0x00;
+  OtaRequest.byte(4) = 0x00;
+  OtaRequest.byte(5) = 0x00;
+  OtaRequest.byte(6) = 0x00;
+  OtaRequest.byte(7) = 0x00;
+  output(OtaRequest);
+}
+
+byte calcOtaDataAuth(byte sequence, byte payloadLength)
+{
+  return (byte)(lastSecuritySeed ^ sequence ^ payloadLength ^ 0xC3);
+}
+
+byte updateOtaPayloadChecksum(byte checksum, byte payloadLength, byte startValue)
+{
+  byte i;
+
+  for (i = 0; i < payloadLength; i++)
+  {
+    checksum = checksum ^ (byte)(startValue + i);
+  }
+
+  return checksum;
+}
+
+void sendOtaDataFrame(byte sequence, byte payloadLength, byte startValue)
+{
+  OtaRequest.dlc = 8;
+  OtaRequest.byte(0) = 0x02;
+  OtaRequest.byte(1) = sequence;
+  OtaRequest.byte(2) = payloadLength;
+  OtaRequest.byte(3) = calcOtaDataAuth(sequence, payloadLength);
+  OtaRequest.byte(4) = startValue;
+  OtaRequest.byte(5) = (byte)(startValue + 1);
+  OtaRequest.byte(6) = (byte)(startValue + 2);
+  OtaRequest.byte(7) = (byte)(startValue + 3);
+  output(OtaRequest);
+}
+
+void sendOtaEndWithChecksum(byte sequence, byte checksum)
+{
+  sendOtaRequestWithByte2(0x03, sequence, checksum);
+}
+
+void resetOtaResponse()
+{
+  otaResponseSeen = 0;
+  lastOtaResponseCode = 0;
+  lastOtaResponseCommand = 0;
+  lastOtaResponseSequence = 0;
+  lastOtaResponseDetail = 0;
+}
+
+byte unlockSecurity(byte seedSequence, byte keySequence)
+{
+  resetOtaResponse();
+  sendOtaRequest(0x10, seedSequence);
+  testWaitForTimeout(250);
+
+  if ((otaResponseSeen == 0) ||
+      (lastOtaResponseCode != 0x79) ||
+      (lastOtaResponseCommand != 0x10) ||
+      (lastOtaResponseSequence != seedSequence))
+  {
+    return 0;
+  }
+
+  lastSecuritySeed = lastOtaResponseDetail;
+
+  resetOtaResponse();
+  sendOtaRequestWithByte2(0x11, keySequence, (byte)(lastSecuritySeed ^ 0xA5));
+  testWaitForTimeout(250);
+
+  if ((otaResponseSeen == 0) ||
+      (lastOtaResponseCode != 0x79) ||
+      (lastOtaResponseCommand != 0x11) ||
+      (lastOtaResponseSequence != keySequence) ||
+      (lastOtaResponseDetail != 0x00))
+  {
+    return 0;
+  }
+
+  return 1;
+}
+
+testcase TC_ECU6_001_GatewayAllowValidMessage()
+{
+  gatewaySeen = 0;
+  gatewayPassSeen = 0;
+  lastGatewayAlive = 0xFF;
+
+  testStep("ECU6 Gateway", "Wait for normal GatewayStatus 0x601");
+  testWaitForTimeout(1000);
+
+  if (gatewayPassSeen != 0)
+  {
+    testStepPass("ECU6 Gateway NORMAL observed");
+  }
+  else if (gatewaySeen != 0)
+  {
+    testStepFail("GatewayStatus 0x601 observed, but NORMAL condition was not reached");
+  }
+  else
+  {
+    testStepFail("GatewayStatus 0x601 was not observed");
+  }
+}
+
+testcase TC_ECU6_002_GatewayBlockInvalidID()
+{
+  byte beforeBlocked;
+
+  beforeBlocked = lastBlockedMsgCnt;
+
+  testStep("ECU6 Gateway", "Inject an unknown CAN ID and expect BlockedMsgCnt increment");
+  sendInvalidGatewayId();
+  testWaitForTimeout(250);
+
+  if ((gatewaySeen != 0) && (lastBlockedMsgCnt != beforeBlocked))
+  {
+    testStepPass("Unknown CAN ID was counted by GatewayStatus");
+  }
+  else
+  {
+    testStepFail("Unknown CAN ID did not change GatewayStatus BlockedMsgCnt");
+  }
+}
+
+testcase TC_ECU6_003_GatewayBlockWrongChecksum()
+{
+  byte beforeBlocked;
+
+  beforeBlocked = lastBlockedMsgCnt;
+
+  testStep("ECU6 Gateway", "Inject monitored CAN ID 0x301 with wrong checksum");
+  sendBadSensorChecksum();
+  testWaitForTimeout(250);
+
+  if ((gatewaySeen != 0) &&
+      (lastChecksumError != 0) &&
+      (lastBlockedMsgCnt != beforeBlocked))
+  {
+    testStepPass("Wrong checksum was rejected and reported by GatewayStatus");
+  }
+  else
+  {
+    testStepFail("Wrong checksum was not reflected in GatewayStatus");
+  }
+}
+
+testcase TC_ECU6_Transport_OTARequestResponse()
+{
+  resetOtaResponse();
+
+  testStep("ECU6 OTA", "Send REQUEST_SEED 0x650 and expect OTA_RESPONSE 0x651");
+  sendOtaRequest(0x10, 0x00);
+  testWaitForTimeout(250);
+
+  if ((otaResponseSeen != 0) &&
+      (lastOtaResponseCommand == 0x10) &&
+      (lastOtaResponseSequence == 0x00) &&
+      (lastOtaResponseCode == 0x79))
+  {
+    testStepPass("OTA_RESPONSE 0x651 observed for REQUEST_SEED 0x650");
+  }
+  else
+  {
+    testStepFail("OTA_RESPONSE 0x651 was not observed for REQUEST_SEED 0x650");
+  }
+}
+
+testcase TC_ECU6_005_OTAStateMachine()
+{
+  byte sawReady;
+  byte payloadChecksum;
+
+  sawReady = 0;
+  payloadChecksum = 0x00;
+
+  testStep("ECU6 OTA", "Unlock security before OTA state-machine test");
+  if (unlockSecurity(0x08, 0x09) == 0)
+  {
+    testStepFail("Security unlock failed before OTA state-machine test");
+    return;
+  }
+
+  testStep("ECU6 OTA", "START should move OTAState to START");
+  resetOtaResponse();
+  sendOtaRequest(0x01, 0x10);
+  testWaitForTimeout(150);
+  if ((otaResponseSeen != 0) && (lastOtaResponseCode == 0x79) && (lastOtaState == 1))
+  {
+    testStepPass("OTAState START observed");
+  }
+  else
+  {
+    testStepFail("OTAState START was not observed");
+  }
+
+  testStep("ECU6 OTA", "DATA should move OTAState to RECEIVING");
+  resetOtaResponse();
+  payloadChecksum = updateOtaPayloadChecksum(payloadChecksum, 0x01, 0x55);
+  sendOtaDataFrame(0x11, 0x01, 0x55);
+  testWaitForTimeout(150);
+  if ((otaResponseSeen != 0) && (lastOtaResponseCode == 0x79) && (lastOtaState == 2))
+  {
+    testStepPass("OTAState RECEIVING observed");
+  }
+  else
+  {
+    testStepFail("OTAState RECEIVING was not observed");
+  }
+
+  testStep("ECU6 OTA", "END should move OTAState to VERIFYING");
+  resetOtaResponse();
+  sendOtaEndWithChecksum(0x12, payloadChecksum);
+  testWaitForTimeout(50);
+  if ((otaResponseSeen != 0) && (lastOtaResponseCode == 0x79) && (lastOtaState == 3))
+  {
+    testStepPass("OTAState VERIFYING observed");
+  }
+  else
+  {
+    testStepFail("OTAState VERIFYING was not observed");
+  }
+
+  testStep("ECU6 OTA", "GatewayStatus should then publish READY_TO_ACTIVATE");
+  testWaitForTimeout(250);
+  if (lastOtaState == 4)
+  {
+    sawReady = 1;
+    testStepPass("OTAState READY_TO_ACTIVATE observed");
+  }
+  else
+  {
+    testStepFail("OTAState READY_TO_ACTIVATE was not observed");
+  }
+
+  testStep("ECU6 OTA", "ACTIVATE should move OTAState to SUCCESS");
+  resetOtaResponse();
+  sendOtaRequest(0x04, 0x13);
+  testWaitForTimeout(150);
+  if ((sawReady != 0) && (otaResponseSeen != 0) && (lastOtaResponseCode == 0x79) && (lastOtaState == 5))
+  {
+    testStepPass("OTAState SUCCESS observed");
+  }
+  else
+  {
+    testStepFail("OTAState SUCCESS was not observed");
+  }
+
+  testStep("ECU6 OTA", "ABORT should move OTAState to FAILED");
+  resetOtaResponse();
+  sendOtaRequest(0x05, 0x14);
+  testWaitForTimeout(150);
+  if ((otaResponseSeen != 0) && (lastOtaResponseCode == 0x79) && (lastOtaState == 6))
+  {
+    testStepPass("OTAState FAILED observed");
+  }
+  else
+  {
+    testStepFail("OTAState FAILED was not observed");
+  }
+}
+
+void MainTest()
+{
+  TC_ECU6_001_GatewayAllowValidMessage();
+  TC_ECU6_002_GatewayBlockInvalidID();
+  TC_ECU6_003_GatewayBlockWrongChecksum();
+  TC_ECU6_Transport_OTARequestResponse();
+  TC_ECU6_005_OTAStateMachine();
+}

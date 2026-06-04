@@ -1,0 +1,19 @@
+; ============================================================================
+; Automotive Cluster TRACE32 register/state view helper
+; ============================================================================
+
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+
+WinPOS 0. 0. 64. 35. 0. 0. W001
+Register.view
+
+WinPOS 65. 0. 65. 35. 0. 0. W002
+SYStem.state
+
+WinPOS 0. 36. 130. 20. 0. 0. W003
+Break.List
+
+ENDDO

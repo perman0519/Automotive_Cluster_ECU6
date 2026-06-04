@@ -1,0 +1,80 @@
+/*@!Encoding:1252*/
+variables
+{
+  msTimer tSensor;
+  message 0x301 SensorStatus;
+
+  byte alive301 = 0;
+
+  int ambientTempC = 25;
+  byte lightLevelPercent = 70;
+  byte batteryVoltageDeciV = 125;
+  int steeringAngleDeg = 0;
+  byte batteryLow = 0;
+  byte batteryOverVoltage = 0;
+  byte nightModeRequest = 0;
+  byte sensorError = 0;
+  byte sensorStuck = 0;
+}
+
+byte calcChecksum(long canId, byte d0, byte d1, byte d2, byte d3, byte d4, byte d5, byte d6)
+{
+  byte checksum;
+
+  checksum = (byte)(canId & 0xFF);
+  checksum = checksum ^ d0;
+  checksum = checksum ^ d1;
+  checksum = checksum ^ d2;
+  checksum = checksum ^ d3;
+  checksum = checksum ^ d4;
+  checksum = checksum ^ d5;
+  checksum = checksum ^ d6;
+
+  return checksum;
+}
+
+void sendSensorStatus()
+{
+  word steeringRaw;
+
+  SensorStatus.dlc = 8;
+
+  SensorStatus.byte(0) = (byte)(ambientTempC + 40);
+  SensorStatus.byte(1) = lightLevelPercent;
+  SensorStatus.byte(2) = batteryVoltageDeciV;
+  steeringRaw = (word)steeringAngleDeg;
+  SensorStatus.byte(3) = (byte)(steeringRaw & 0xFF);
+  SensorStatus.byte(4) = (byte)((steeringRaw >> 8) & 0xFF);
+
+  SensorStatus.byte(5) = 0;
+  SensorStatus.byte(5) = SensorStatus.byte(5) | ((batteryLow & 0x01) << 0);
+  SensorStatus.byte(5) = SensorStatus.byte(5) | ((batteryOverVoltage & 0x01) << 1);
+  SensorStatus.byte(5) = SensorStatus.byte(5) | ((nightModeRequest & 0x01) << 2);
+  SensorStatus.byte(5) = SensorStatus.byte(5) | ((sensorError & 0x01) << 3);
+  SensorStatus.byte(5) = SensorStatus.byte(5) | ((sensorStuck & 0x01) << 4);
+
+  SensorStatus.byte(6) = alive301 & 0x0F;
+  SensorStatus.byte(7) = calcChecksum(0x301,
+                                      SensorStatus.byte(0),
+                                      SensorStatus.byte(1),
+                                      SensorStatus.byte(2),
+                                      SensorStatus.byte(3),
+                                      SensorStatus.byte(4),
+                                      SensorStatus.byte(5),
+                                      SensorStatus.byte(6));
+
+  output(SensorStatus);
+  alive301 = (alive301 + 1) & 0x0F;
+}
+
+on start
+{
+  sendSensorStatus();
+  setTimer(tSensor, 100);
+}
+
+on timer tSensor
+{
+  sendSensorStatus();
+  setTimer(tSensor, 100);
+}

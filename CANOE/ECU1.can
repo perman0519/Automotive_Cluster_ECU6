@@ -1,0 +1,81 @@
+/*@!Encoding:1252*/
+variables
+{
+  msTimer tBody;
+  message 0x101 BodyStatus;
+
+  byte alive101 = 0;
+
+  byte doorFL = 0;
+  byte doorFR = 0;
+  byte doorRL = 0;
+  byte doorRR = 0;
+  byte seatbelt = 1;
+  byte hazardActive = 0;
+  byte turnSignalMode = 0;
+  byte bodyWarning = 0;
+  byte inputError = 0;
+}
+
+byte calcChecksum(long canId, byte d0, byte d1, byte d2, byte d3, byte d4, byte d5, byte d6)
+{
+  byte checksum;
+
+  checksum = (byte)(canId & 0xFF);
+  checksum = checksum ^ d0;
+  checksum = checksum ^ d1;
+  checksum = checksum ^ d2;
+  checksum = checksum ^ d3;
+  checksum = checksum ^ d4;
+  checksum = checksum ^ d5;
+  checksum = checksum ^ d6;
+
+  return checksum;
+}
+
+void sendBodyStatus()
+{
+  BodyStatus.dlc = 8;
+
+  BodyStatus.byte(0) = 0;
+  BodyStatus.byte(0) = BodyStatus.byte(0) | ((doorFL & 0x01) << 0);
+  BodyStatus.byte(0) = BodyStatus.byte(0) | ((doorFR & 0x01) << 1);
+  BodyStatus.byte(0) = BodyStatus.byte(0) | ((doorRL & 0x01) << 2);
+  BodyStatus.byte(0) = BodyStatus.byte(0) | ((doorRR & 0x01) << 3);
+  BodyStatus.byte(0) = BodyStatus.byte(0) | ((seatbelt & 0x01) << 4);
+  BodyStatus.byte(0) = BodyStatus.byte(0) | ((hazardActive & 0x01) << 5);
+
+  BodyStatus.byte(1) = 0;
+  BodyStatus.byte(1) = BodyStatus.byte(1) | (turnSignalMode & 0x03);
+  BodyStatus.byte(1) = BodyStatus.byte(1) | ((bodyWarning & 0x01) << 4);
+  BodyStatus.byte(1) = BodyStatus.byte(1) | ((inputError & 0x01) << 5);
+
+  BodyStatus.byte(2) = 0;
+  BodyStatus.byte(3) = 0;
+  BodyStatus.byte(4) = 0;
+  BodyStatus.byte(5) = 0;
+  BodyStatus.byte(6) = alive101 & 0x0F;
+  BodyStatus.byte(7) = calcChecksum(0x101,
+                                    BodyStatus.byte(0),
+                                    BodyStatus.byte(1),
+                                    BodyStatus.byte(2),
+                                    BodyStatus.byte(3),
+                                    BodyStatus.byte(4),
+                                    BodyStatus.byte(5),
+                                    BodyStatus.byte(6));
+
+  output(BodyStatus);
+  alive101 = (alive101 + 1) & 0x0F;
+}
+
+on start
+{
+  sendBodyStatus();
+  setTimer(tBody, 100);
+}
+
+on timer tBody
+{
+  sendBodyStatus();
+  setTimer(tBody, 100);
+}

@@ -1,0 +1,62 @@
+; ============================================================================
+; ECU6 init/load script for TRACE32 PowerView
+; Requirement: REQ-COM-010
+;
+; Usage:
+;   1. Open TRACE32 PowerView for PowerPC.
+;   2. Connect the MPC5748G target.
+;   3. Run: DO cmm\init_debug.cmm
+;
+; If your Lauterbach setup uses a board-specific startup script, run that first
+; and keep this file for reset, ELF load, breakpoint, and run-to-main evidence.
+; ============================================================================
+
+PRIVATE &PROJECT_ROOT
+PRIVATE &ELF_FILE
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+AREA.RESet
+AREA.Create ECU6_Init
+AREA.Select ECU6_Init
+
+PRINT "ECU6 Trace32 init_debug.cmm"
+PRINT "ELF: &ELF_FILE"
+
+RESet
+SYStem.RESet
+
+; Adjust these two lines if your TRACE32 installation uses a different CPU name
+; or if a board-specific startup CMM already configures the target.
+SYStem.CPU MPC5748G
+SYStem.Option MMUSPACES OFF
+
+SYStem.Mode Down
+SYStem.Up
+
+Break.Delete
+Data.LOAD.Elf &ELF_FILE
+
+Break.Set main /Program
+
+WinPOS 0. 0. 74. 39. 0. 0. W001
+List.Mix main
+
+WinPOS 75. 0. 55. 19. 0. 0. W002
+Register.view
+
+WinPOS 75. 20. 55. 19. 0. 0. W003
+Break.List
+
+WinPOS 0. 40. 130. 20. 0. 0. W004
+SYStem.state
+
+PRINT "Breakpoint set at main. Running to main..."
+Go
+
+PRINT "init_debug.cmm completed."

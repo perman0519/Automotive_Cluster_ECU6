@@ -1,0 +1,26 @@
+; ============================================================================
+; Automotive Cluster TRACE32 toolbar buttons
+;
+; MENU.AddTool adds temporary buttons to the TRACE32 main toolbar for the
+; current session. Run this directly, or let startup_dashboard.cmm load it.
+; ============================================================================
+
+GLOBAL &PROJECT_ROOT
+GLOBAL &ELF_FILE
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+
+MENU.AddTool "Automotive: init/load ELF/run to main"        "IN,G" "DO &PROJECT_ROOT\cmm\init_debug.cmm"
+MENU.AddTool "Automotive: runtime review breakpoints"      "RT,B" "DO &PROJECT_ROOT\cmm\test_debug.cmm"
+MENU.AddTool "Automotive: gateway debug"                   "GW,B" "DO &PROJECT_ROOT\cmm\gateway_debug.cmm"
+MENU.AddTool "Automotive: OTA debug"                       "OT,R" "DO &PROJECT_ROOT\cmm\ota_debug.cmm"
+MENU.AddTool "Automotive: security debug"                  "SC,R" "DO &PROJECT_ROOT\cmm\security_debug.cmm"
+MENU.AddTool "Automotive: interrupt evidence"              "IR,R" "DO &PROJECT_ROOT\cmm\interrupt_evidence.cmm"
+MENU.AddTool "Automotive: reset target"                    "RS,R" "SYStem.RESet"
+MENU.AddTool "Automotive: registers/system state"          "RG,B" "DO &PROJECT_ROOT\cmm\show_registers.cmm"
+MENU.AddTool "Automotive: show main source"                "LM,G" "DO &PROJECT_ROOT\cmm\show_main.cmm"
+
+PRINT "Automotive Cluster TRACE32 toolbar buttons installed."
+
+ENDDO

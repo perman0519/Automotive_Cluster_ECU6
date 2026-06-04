@@ -1,0 +1,75 @@
+/*@!Encoding:1252*/
+variables
+{
+  msTimer tPowertrain;
+  message 0x201 PowertrainStatus;
+
+  byte alive201 = 0;
+
+  byte vehicleSpeedKph = 60;
+  word engineRpm = 3000;
+  int engineTempC = 90;
+  byte throttlePercent = 25;
+  byte engineWarning = 0;
+  byte engineCriticalFault = 0;
+  byte limpModeActive = 0;
+  byte inputError = 0;
+}
+
+byte calcChecksum(long canId, byte d0, byte d1, byte d2, byte d3, byte d4, byte d5, byte d6)
+{
+  byte checksum;
+
+  checksum = (byte)(canId & 0xFF);
+  checksum = checksum ^ d0;
+  checksum = checksum ^ d1;
+  checksum = checksum ^ d2;
+  checksum = checksum ^ d3;
+  checksum = checksum ^ d4;
+  checksum = checksum ^ d5;
+  checksum = checksum ^ d6;
+
+  return checksum;
+}
+
+void sendPowertrainStatus()
+{
+  PowertrainStatus.dlc = 8;
+
+  PowertrainStatus.byte(0) = vehicleSpeedKph;
+  PowertrainStatus.byte(1) = (byte)(engineRpm / 50);
+  PowertrainStatus.byte(2) = (byte)(engineTempC + 40);
+  PowertrainStatus.byte(3) = throttlePercent;
+
+  PowertrainStatus.byte(4) = 0;
+  PowertrainStatus.byte(4) = PowertrainStatus.byte(4) | ((engineWarning & 0x01) << 0);
+  PowertrainStatus.byte(4) = PowertrainStatus.byte(4) | ((engineCriticalFault & 0x01) << 1);
+  PowertrainStatus.byte(4) = PowertrainStatus.byte(4) | ((limpModeActive & 0x01) << 2);
+  PowertrainStatus.byte(4) = PowertrainStatus.byte(4) | ((inputError & 0x01) << 3);
+
+  PowertrainStatus.byte(5) = 0;
+  PowertrainStatus.byte(6) = alive201 & 0x0F;
+  PowertrainStatus.byte(7) = calcChecksum(0x201,
+                                          PowertrainStatus.byte(0),
+                                          PowertrainStatus.byte(1),
+                                          PowertrainStatus.byte(2),
+                                          PowertrainStatus.byte(3),
+                                          PowertrainStatus.byte(4),
+                                          PowertrainStatus.byte(5),
+                                          PowertrainStatus.byte(6));
+
+  output(PowertrainStatus);
+  alive201 = (alive201 + 1) & 0x0F;
+}
+
+on start
+{
+  sendPowertrainStatus();
+  setTimer(tPowertrain, 50);
+}
+
+on timer tPowertrain
+{
+  sendPowertrainStatus();
+  setTimer(tPowertrain, 50);
+}

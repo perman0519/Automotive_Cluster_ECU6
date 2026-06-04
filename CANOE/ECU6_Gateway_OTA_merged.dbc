@@ -1,0 +1,232 @@
+VERSION "MPC5748G Automotive Cluster Gateway OTA DBC"
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: ECU1 ECU2 ECU3 ECU4 ECU5 ECU6 CANoe Vector__XXX
+
+
+BO_ 257 BodyStatus: 8 ECU1
+ SG_ DoorFL : 0|1@1+ (1,0) [0|1] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ DoorFR : 1|1@1+ (1,0) [0|1] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ DoorRL : 2|1@1+ (1,0) [0|1] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ DoorRR : 3|1@1+ (1,0) [0|1] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ Seatbelt : 8|1@1+ (1,0) [0|1] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ HazardActive : 27|1@1+ (1,0) [0|1] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ TurnSignalMode : 16|2@1+ (1,0) [0|3] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ BodyWarning : 24|1@1+ (1,0) [0|1] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ BodyInputError : 25|2@1+ (1,0) [0|3] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ BodyAliveCounter : 48|4@1+ (1,0) [0|15] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ BodyChecksum : 56|8@1+ (1,0) [0|255] ""  ECU2,ECU3,ECU4,ECU5,ECU6,CANoe
+
+BO_ 513 PowertrainStatus: 8 ECU2
+ SG_ VehicleSpeedKph : 0|8@1+ (1,0) [0|220] "km/h"  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ EngineRPM : 8|8@1+ (50,0) [0|8000] "rpm"  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ EngineTempC : 16|8@1+ (1,-40) [-40|150] "degC"  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ ThrottlePercent : 24|8@1+ (1,0) [0|100] "%"  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ EngineWarning : 32|1@1+ (1,0) [0|1] ""  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ EngineCriticalFault : 33|1@1+ (1,0) [0|1] ""  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ LimpModeActive : 34|1@1+ (1,0) [0|1] ""  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ PowertrainInputError : 35|1@1+ (1,0) [0|1] ""  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ PowertrainAliveCounter : 48|4@1+ (1,0) [0|15] ""  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+ SG_ PowertrainChecksum : 56|8@1+ (1,0) [0|255] ""  ECU1,ECU3,ECU4,ECU5,ECU6,CANoe
+
+BO_ 769 SensorStatus: 8 ECU3
+ SG_ AmbientTempC : 0|8@1+ (1,-40) [-40|85] "degC"  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ LightLevelPercent : 8|8@1+ (1,0) [0|100] "%"  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ BatteryVoltage : 16|8@1+ (0.1,0) [6|18] "V"  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ SteeringAngleDeg : 24|16@1- (1,0) [-540|540] "deg"  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ BatteryLow : 40|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ BatteryOverVoltage : 41|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ NightModeRequest : 42|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ SensorError : 43|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ SensorStuck : 44|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ SensorAliveCounter : 48|4@1+ (1,0) [0|15] ""  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+ SG_ SensorChecksum : 56|8@1+ (1,0) [0|255] ""  ECU1,ECU2,ECU4,ECU5,ECU6,CANoe
+
+BO_ 1025 ClusterStatus: 8 ECU4
+ SG_ ClusterState : 0|8@1+ (1,0) [0|5] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ DisplayedSpeedKph : 8|8@1+ (1,0) [0|220] "km/h"  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ DisplayedRPM : 16|8@1+ (50,0) [0|8000] "rpm"  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ DoorWarningLamp : 24|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ SeatbeltWarningLamp : 25|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ EngineWarningLamp : 26|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ SensorWarningLamp : 27|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ BatteryWarningLamp : 28|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ DiagModeLamp : 32|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ OtaModeLamp : 33|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ FailSafeLamp : 34|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ ClusterAliveCounter : 48|4@1+ (1,0) [0|15] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+ SG_ ClusterChecksum : 56|8@1+ (1,0) [0|255] ""  ECU1,ECU2,ECU3,ECU5,ECU6,CANoe
+
+BO_ 1281 DiagnosticStatus: 8 ECU5
+ SG_ CurrentSession : 0|8@1+ (1,0) [0|3] ""  ECU1,ECU2,ECU3,ECU4,ECU6,CANoe
+ SG_ DiagSecurityUnlocked : 8|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU4,ECU6,CANoe
+ SG_ DiagActive : 9|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU4,ECU6,CANoe
+ SG_ ActiveDtcCount : 16|8@1+ (1,0) [0|255] ""  ECU1,ECU2,ECU3,ECU4,ECU6,CANoe
+ SG_ LastServiceId : 24|8@1+ (1,0) [0|255] ""  ECU1,ECU2,ECU3,ECU4,ECU6,CANoe
+ SG_ LastNrc : 32|8@1+ (1,0) [0|255] ""  ECU1,ECU2,ECU3,ECU4,ECU6,CANoe
+ SG_ DiagnosticAliveCounter : 48|4@1+ (1,0) [0|15] ""  ECU1,ECU2,ECU3,ECU4,ECU6,CANoe
+ SG_ DiagnosticChecksum : 56|8@1+ (1,0) [0|255] ""  ECU1,ECU2,ECU3,ECU4,ECU6,CANoe
+
+BO_ 1537 GatewayStatus: 8 ECU6
+ SG_ GatewayState : 0|8@1+ (1,0) [0|2] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ OtaState : 8|3@1+ (1,0) [0|6] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ SecurityUnlocked : 11|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ SecurityLocked : 12|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ GatewayAliveError : 13|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ GatewayChecksumError : 14|1@1+ (1,0) [0|1] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ BlockedMsgCnt : 16|8@1+ (1,0) [0|255] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ SecurityErrorCounter : 24|8@1+ (1,0) [0|255] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ ActiveSWVersion : 32|8@1+ (1,0) [1|255] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ GatewayRxMask : 40|5@1+ (1,0) [0|31] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ GatewayAliveCounter : 48|4@1+ (1,0) [0|15] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+ SG_ GatewayChecksum : 56|8@1+ (1,0) [0|255] ""  ECU1,ECU2,ECU3,ECU4,ECU5,CANoe
+
+BO_ 1616 OTA_Request: 8 CANoe
+ SG_ OtaRequestCommand : 0|8@1+ (1,0) [0|255] ""  ECU6
+ SG_ OtaRequestSequence : 8|8@1+ (1,0) [0|255] ""  ECU6
+ SG_ OtaRequestParam : 16|8@1+ (1,0) [0|255] ""  ECU6
+ SG_ OtaRequestAuthByte : 24|8@1+ (1,0) [0|255] ""  ECU6
+ SG_ OtaRequestPayload0 : 32|8@1+ (1,0) [0|255] ""  ECU6
+ SG_ OtaRequestPayload1 : 40|8@1+ (1,0) [0|255] ""  ECU6
+ SG_ OtaRequestPayload2 : 48|8@1+ (1,0) [0|255] ""  ECU6
+ SG_ OtaRequestPayload3 : 56|8@1+ (1,0) [0|255] ""  ECU6
+
+BO_ 1617 OTA_Response: 8 ECU6
+ SG_ OtaResponseCode : 0|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ OtaEchoCommand : 8|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ OtaEchoSequence : 16|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ OtaResponseDetail : 24|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ OtaResponseState : 32|3@1+ (1,0) [0|6] ""  CANoe
+ SG_ OtaResponseActiveSWVersion : 40|8@1+ (1,0) [1|255] ""  CANoe
+ SG_ OtaResponseCounter : 48|4@1+ (1,0) [0|15] ""  CANoe
+ SG_ OtaResponseChecksum : 56|8@1+ (1,0) [0|255] ""  CANoe
+
+BO_ 2015 UDS_FunctionalRequest: 8 CANoe
+ SG_ UDSFuncPci : 0|8@1+ (1,0) [0|255] ""  ECU5,ECU6
+ SG_ UDSFuncServiceId : 8|8@1+ (1,0) [0|255] ""  ECU5,ECU6
+ SG_ UDSFuncData0 : 16|8@1+ (1,0) [0|255] ""  ECU5,ECU6
+ SG_ UDSFuncData1 : 24|8@1+ (1,0) [0|255] ""  ECU5,ECU6
+ SG_ UDSFuncData2 : 32|8@1+ (1,0) [0|255] ""  ECU5,ECU6
+ SG_ UDSFuncData3 : 40|8@1+ (1,0) [0|255] ""  ECU5,ECU6
+ SG_ UDSFuncData4 : 48|8@1+ (1,0) [0|255] ""  ECU5,ECU6
+ SG_ UDSFuncData5 : 56|8@1+ (1,0) [0|255] ""  ECU5,ECU6
+
+BO_ 2016 UDS_PhysicalRequest: 8 CANoe
+ SG_ UDSPhysPci : 0|8@1+ (1,0) [0|255] ""  ECU5
+ SG_ UDSPhysServiceId : 8|8@1+ (1,0) [0|255] ""  ECU5
+ SG_ UDSPhysData0 : 16|8@1+ (1,0) [0|255] ""  ECU5
+ SG_ UDSPhysData1 : 24|8@1+ (1,0) [0|255] ""  ECU5
+ SG_ UDSPhysData2 : 32|8@1+ (1,0) [0|255] ""  ECU5
+ SG_ UDSPhysData3 : 40|8@1+ (1,0) [0|255] ""  ECU5
+ SG_ UDSPhysData4 : 48|8@1+ (1,0) [0|255] ""  ECU5
+ SG_ UDSPhysData5 : 56|8@1+ (1,0) [0|255] ""  ECU5
+
+BO_ 2024 UDS_Response: 8 ECU5
+ SG_ UDSResponsePci : 0|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ UDSResponseServiceId : 8|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ UDSResponseData0OrRequestSid : 16|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ UDSResponseData1OrNrc : 24|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ UDSResponseData2 : 32|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ UDSResponseData3 : 40|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ UDSResponseData4 : 48|8@1+ (1,0) [0|255] ""  CANoe
+ SG_ UDSResponseData5 : 56|8@1+ (1,0) [0|255] ""  CANoe
+
+
+
+CM_ BO_ 257 "ECU1 BodyStatus sent every 100 ms and monitored by ECU6/CANoe.";
+CM_ BO_ 513 "ECU2 PowertrainStatus sent every 50 ms and monitored by ECU6/CANoe.";
+CM_ SG_ 513 VehicleSpeedKph "Requirement valid range: 0..220 km/h. Raw byte capacity remains available for invalid-value injection.";
+CM_ SG_ 513 EngineRPM "Requirement valid range: 0..8000 rpm. Scaling is 50 rpm/bit.";
+CM_ SG_ 513 EngineTempC "Requirement valid range: -40..150 degC. Raw byte capacity remains available for invalid-value injection.";
+CM_ BO_ 769 "ECU3 SensorStatus sent every 100 ms and monitored by ECU6/CANoe.";
+CM_ SG_ 769 AmbientTempC "Requirement valid range: -40..85 degC.";
+CM_ SG_ 769 BatteryVoltage "Requirement valid range: 6..18 V. Scaling is 0.1 V/bit.";
+CM_ SG_ 769 SteeringAngleDeg "Signed 16-bit little-endian steering angle. Requirement valid range: -540..540 deg.";
+CM_ BO_ 1025 "ECU4 ClusterStatus sent every 100 ms and monitored by ECU6/CANoe.";
+CM_ SG_ 1025 ClusterState "Requirement states: INIT, NORMAL, WARNING, DIAG_MODE, OTA_MODE, FAIL_SAFE.";
+CM_ BO_ 1281 "ECU5 DiagnosticStatus sent every 100 ms and monitored by ECU6/CANoe.";
+CM_ BO_ 1537 "ECU6 GatewayStatus sent every 100 ms. ECU4 and CANoe decode gateway, OTA, and security status.";
+CM_ BO_ 1616 "Event-based OTA request frame from CANoe panel or test to ECU6.";
+CM_ BO_ 1617 "Event-based OTA response frame from ECU6 to CANoe.";
+CM_ BO_ 2015 "Event-based UDS functional request from CANoe to ECU5/ECU6 on CAN ID 0x7DF.";
+CM_ BO_ 2016 "Event-based UDS physical request from CANoe to ECU5 on CAN ID 0x7E0.";
+CM_ BO_ 2024 "Event-based UDS response from ECU5 to CANoe on CAN ID 0x7E8.";
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 65535;
+BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_ "GenMsgCycleTime" BO_ 257 100;
+BA_ "GenMsgCycleTime" BO_ 513 50;
+BA_ "GenMsgCycleTime" BO_ 769 100;
+BA_ "GenMsgCycleTime" BO_ 1025 100;
+BA_ "GenMsgCycleTime" BO_ 1281 100;
+BA_ "GenMsgCycleTime" BO_ 1537 100;
+BA_ "GenMsgCycleTime" BO_ 1616 0;
+BA_ "GenMsgCycleTime" BO_ 1617 0;
+BA_ "GenMsgCycleTime" BO_ 2015 0;
+BA_ "GenMsgCycleTime" BO_ 2016 0;
+BA_ "GenMsgCycleTime" BO_ 2024 0;
+VAL_ 257 DoorFL 1 "Open" 0 "Closed" ;
+VAL_ 257 DoorFR 1 "Open" 0 "Closed" ;
+VAL_ 257 DoorRL 1 "Open" 0 "Closed" ;
+VAL_ 257 DoorRR 1 "Open" 0 "Closed" ;
+VAL_ 257 Seatbelt 1 "Fastened" 0 "Unfastened" ;
+VAL_ 257 HazardActive 1 "Active" 0 "Inactive" ;
+VAL_ 257 TurnSignalMode 3 "Hazard" 2 "Right" 1 "Left" 0 "Off" ;
+VAL_ 257 BodyWarning 1 "Active" 0 "Inactive" ;
+VAL_ 257 BodyInputError 1 "Error" 0 "OK" ;
+VAL_ 513 EngineWarning 1 "Active" 0 "Inactive" ;
+VAL_ 513 EngineCriticalFault 1 "Active" 0 "Inactive" ;
+VAL_ 513 LimpModeActive 1 "Active" 0 "Inactive" ;
+VAL_ 513 PowertrainInputError 1 "Error" 0 "OK" ;
+VAL_ 769 BatteryLow 1 "Active" 0 "Inactive" ;
+VAL_ 769 BatteryOverVoltage 1 "Active" 0 "Inactive" ;
+VAL_ 769 NightModeRequest 1 "Active" 0 "Inactive" ;
+VAL_ 769 SensorError 1 "Error" 0 "OK" ;
+VAL_ 769 SensorStuck 1 "Stuck" 0 "OK" ;
+VAL_ 1025 ClusterState 5 "FAIL_SAFE" 4 "OTA_MODE" 3 "DIAG_MODE" 2 "WARNING" 1 "NORMAL" 0 "INIT" ;
+VAL_ 1025 DoorWarningLamp 1 "On" 0 "Off" ;
+VAL_ 1025 SeatbeltWarningLamp 1 "On" 0 "Off" ;
+VAL_ 1025 EngineWarningLamp 1 "On" 0 "Off" ;
+VAL_ 1025 SensorWarningLamp 1 "On" 0 "Off" ;
+VAL_ 1025 BatteryWarningLamp 1 "On" 0 "Off" ;
+VAL_ 1025 DiagModeLamp 1 "On" 0 "Off" ;
+VAL_ 1025 OtaModeLamp 1 "On" 0 "Off" ;
+VAL_ 1025 FailSafeLamp 1 "On" 0 "Off" ;
+VAL_ 1281 CurrentSession 3 "Extended" 2 "Programming" 1 "Default" 0 "Inactive" ;
+VAL_ 1281 DiagSecurityUnlocked 1 "Unlocked" 0 "Locked" ;
+VAL_ 1281 DiagActive 1 "Active" 0 "Inactive" ;
+VAL_ 1537 GatewayState 2 "DEGRADED" 1 "NORMAL" 0 "INIT" ;
+VAL_ 1537 OtaState 6 "FAILED" 5 "SUCCESS" 4 "READY_TO_ACTIVATE" 3 "VERIFYING" 2 "RECEIVING" 1 "START" 0 "IDLE" ;
+VAL_ 1537 SecurityUnlocked 1 "Unlocked" 0 "Locked" ;
+VAL_ 1537 SecurityLocked 1 "Locked" 0 "Unlocked" ;
+VAL_ 1537 GatewayAliveError 1 "Error" 0 "OK" ;
+VAL_ 1537 GatewayChecksumError 1 "Error" 0 "OK" ;
+VAL_ 1616 OtaRequestCommand 17 "SEND_KEY" 16 "REQUEST_SEED" 5 "ABORT" 4 "ACTIVATE" 3 "END" 2 "DATA" 1 "START" ;
+VAL_ 1617 OtaResponseCode 127 "NACK" 121 "ACK" ;
+['OtaEchoCommand'] 17 "SEND_KEY" 16 "REQUEST_SEED" 5 "ABORT" 4 "ACTIVATE" 3 "END" 2 "DATA" 1 "START" ;
+VAL_ 1617 OtaEchoCommand 17 "SEND_KEY" 16 "REQUEST_SEED" 5 "ABORT" 4 "ACTIVATE" 3 "END" 2 "DATA" 1 "START" ;
+VAL_ 1617 OtaResponseDetail 35 "SECURITY_LOCKOUT" 34 "INVALID_KEY" 33 "SEED_REQUIRED" 32 "SECURITY_LOCKED" 24 "INVALID_AUTH" 23 "CHECKSUM_MISMATCH" 22 "BUFFER_OVERFLOW" 21 "INVALID_DATA_LENGTH" 20 "INVALID_SEQUENCE" 18 "UNKNOWN_COMMAND" 17 "INVALID_DLC" 16 "INVALID_ID" 0 "ACCEPTED_OR_SEED" ;
+VAL_ 1617 OtaResponseState 6 "FAILED" 5 "SUCCESS" 4 "READY_TO_ACTIVATE" 3 "VERIFYING" 2 "RECEIVING" 1 "START" 0 "IDLE" ;
+VAL_ 2015 UDSFuncServiceId 46 "WriteDataByIdentifier" 39 "SecurityAccess" 34 "ReadDataByIdentifier" 25 "ReadDTCInformation" 20 "ClearDiagnosticInformation" 17 "ECUReset" 16 "DiagnosticSessionControl" ;
+VAL_ 2016 UDSPhysServiceId 46 "WriteDataByIdentifier" 39 "SecurityAccess" 34 "ReadDataByIdentifier" 25 "ReadDTCInformation" 20 "ClearDiagnosticInformation" 17 "ECUReset" 16 "DiagnosticSessionControl" ;
+VAL_ 2024 UDSResponseServiceId 127 "NegativeResponse" 110 "WriteDataByIdentifierPositive" 103 "SecurityAccessPositive" 98 "ReadDataByIdentifierPositive" 89 "ReadDTCInformationPositive" 84 "ClearDiagnosticInformationPositive" 81 "ECUResetPositive" 80 "DiagnosticSessionControlPositive" ;
+VAL_ 2024 UDSResponseData1OrNrc 53 "InvalidKey" 51 "SecurityAccessDenied" 49 "RequestOutOfRange" 34 "ConditionsNotCorrect" 19 "IncorrectMessageLength" 18 "SubFunctionNotSupported" 17 "ServiceNotSupported" ;

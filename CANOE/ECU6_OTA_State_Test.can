@@ -1,0 +1,1122 @@
+/*@!Encoding:1252*/
+
+variables
+{
+  message 0x650 OtaRequest;
+
+  byte gatewayStatusSeen = 0;
+  byte otaResponseSeen = 0;
+
+  byte lastGatewayOtaState = 0xFF;
+  byte lastGatewaySecurityUnlocked = 0;
+  byte lastGatewaySecurityLocked = 0;
+  byte lastGatewaySecurityErrorCounter = 0;
+  byte lastGatewayActiveSwVersion = 0xFF;
+  byte lastOtaResponseCode = 0;
+  byte lastOtaResponseCommand = 0;
+  byte lastOtaResponseSequence = 0;
+  byte lastOtaResponseDetail = 0;
+  byte lastOtaResponseState = 0xFF;
+  byte lastOtaResponseActiveSwVersion = 0xFF;
+  byte lastOtaResponseCounter = 0xFF;
+  byte lastSecuritySeed = 0;
+
+  byte otaChecksumFail = 0;
+}
+
+byte calcChecksum(long canId, byte d0, byte d1, byte d2, byte d3, byte d4, byte d5, byte d6)
+{
+  byte checksum;
+
+  checksum = (byte)(canId & 0xFF);
+  checksum = checksum ^ d0;
+  checksum = checksum ^ d1;
+  checksum = checksum ^ d2;
+  checksum = checksum ^ d3;
+  checksum = checksum ^ d4;
+  checksum = checksum ^ d5;
+  checksum = checksum ^ d6;
+
+  return checksum;
+}
+
+on message 0x601
+{
+  byte expectedChecksum;
+
+  expectedChecksum = calcChecksum(this.id,
+                                  this.byte(0),
+                                  this.byte(1),
+                                  this.byte(2),
+                                  this.byte(3),
+                                  this.byte(4),
+                                  this.byte(5),
+                                  this.byte(6));
+
+  if (this.byte(7) != expectedChecksum)
+  {
+    write("FAIL 0x601 checksum: rx=0x%02X expected=0x%02X", this.byte(7), expectedChecksum);
+    otaChecksumFail = 1;
+    return;
+  }
+
+  gatewayStatusSeen = 1;
+  lastGatewayOtaState = this.byte(1) & 0x07;
+  lastGatewaySecurityUnlocked = (this.byte(1) >> 3) & 0x01;
+  lastGatewaySecurityLocked = (this.byte(1) >> 4) & 0x01;
+  lastGatewaySecurityErrorCounter = this.byte(3);
+  lastGatewayActiveSwVersion = this.byte(4);
+}
+
+on message 0x651
+{
+  byte expectedChecksum;
+
+  expectedChecksum = calcChecksum(this.id,
+                                  this.byte(0),
+                                  this.byte(1),
+                                  this.byte(2),
+                                  this.byte(3),
+                                  this.byte(4),
+                                  this.byte(5),
+                                  this.byte(6));
+
+  if (this.byte(7) != expectedChecksum)
+  {
+    write("FAIL 0x651 checksum: rx=0x%02X expected=0x%02X", this.byte(7), expectedChecksum);
+    otaChecksumFail = 1;
+    return;
+  }
+
+  otaResponseSeen = 1;
+  lastOtaResponseCode = this.byte(0);
+  lastOtaResponseCommand = this.byte(1);
+  lastOtaResponseSequence = this.byte(2);
+  lastOtaResponseDetail = this.byte(3);
+  lastOtaResponseState = this.byte(4) & 0x07;
+  lastOtaResponseActiveSwVersion = this.byte(5);
+  lastOtaResponseCounter = this.byte(6) & 0x0F;
+
+  write("OTA_RESPONSE 0x651: code=0x%02X cmd=0x%02X seq=0x%02X detail=0x%02X state=%d counter=%d",
+        lastOtaResponseCode,
+        lastOtaResponseCommand,
+        lastOtaResponseSequence,
+        lastOtaResponseDetail,
+        lastOtaResponseState,
+        lastOtaResponseCounter);
+}
+
+void resetOtaObservation()
+{
+  otaResponseSeen = 0;
+  otaChecksumFail = 0;
+  lastOtaResponseCode = 0;
+  lastOtaResponseCommand = 0;
+  lastOtaResponseSequence = 0;
+  lastOtaResponseDetail = 0;
+  lastOtaResponseState = 0xFF;
+  lastOtaResponseActiveSwVersion = 0xFF;
+}
+
+void sendOtaCommand(byte command, byte sequence)
+{
+  OtaRequest.dlc = 8;
+  OtaRequest.byte(0) = command;
+  OtaRequest.byte(1) = sequence;
+  OtaRequest.byte(2) = 0x00;
+  OtaRequest.byte(3) = 0x00;
+  OtaRequest.byte(4) = 0x00;
+  OtaRequest.byte(5) = 0x00;
+  OtaRequest.byte(6) = 0x00;
+  OtaRequest.byte(7) = 0x00;
+
+  output(OtaRequest);
+}
+
+void sendOtaCommandWithByte2(byte command, byte sequence, byte byte2)
+{
+  OtaRequest.dlc = 8;
+  OtaRequest.byte(0) = command;
+  OtaRequest.byte(1) = sequence;
+  OtaRequest.byte(2) = byte2;
+  OtaRequest.byte(3) = 0x00;
+  OtaRequest.byte(4) = 0x00;
+  OtaRequest.byte(5) = 0x00;
+  OtaRequest.byte(6) = 0x00;
+  OtaRequest.byte(7) = 0x00;
+
+  output(OtaRequest);
+}
+
+byte calcOtaDataAuth(byte sequence, byte payloadLength)
+{
+  return (byte)(lastSecuritySeed ^ sequence ^ payloadLength ^ 0xC3);
+}
+
+void sendOtaDataFrameWithAuth(byte sequence, byte payloadLength, byte startValue, byte authByte)
+{
+  OtaRequest.dlc = 8;
+  OtaRequest.byte(0) = 0x02;
+  OtaRequest.byte(1) = sequence;
+  OtaRequest.byte(2) = payloadLength;
+  OtaRequest.byte(3) = authByte;
+  OtaRequest.byte(4) = startValue;
+  OtaRequest.byte(5) = (byte)(startValue + 1);
+  OtaRequest.byte(6) = (byte)(startValue + 2);
+  OtaRequest.byte(7) = (byte)(startValue + 3);
+
+  output(OtaRequest);
+}
+
+void sendOtaDataFrame(byte sequence, byte payloadLength, byte startValue)
+{
+  sendOtaDataFrameWithAuth(sequence,
+                           payloadLength,
+                           startValue,
+                           calcOtaDataAuth(sequence, payloadLength));
+}
+
+byte updateOtaPayloadChecksum(byte checksum, byte payloadLength, byte startValue)
+{
+  byte i;
+
+  for (i = 0; i < payloadLength; i++)
+  {
+    checksum = checksum ^ (byte)(startValue + i);
+  }
+
+  return checksum;
+}
+
+byte nextActiveSwVersion(byte currentVersion)
+{
+  if (currentVersion == 0xFF)
+  {
+    return 0x01;
+  }
+
+  return (byte)(currentVersion + 1);
+}
+
+void sendOtaEndWithChecksum(byte sequence, byte checksum)
+{
+  sendOtaCommandWithByte2(0x03, sequence, checksum);
+}
+
+byte expectOtaResponse(byte command, byte sequence, byte responseCode, byte detail, byte state)
+{
+  if (otaChecksumFail != 0)
+  {
+    return 0;
+  }
+
+  if (otaResponseSeen == 0)
+  {
+    return 0;
+  }
+
+  if (lastOtaResponseCode != responseCode)
+  {
+    return 0;
+  }
+
+  if (lastOtaResponseCommand != command)
+  {
+    return 0;
+  }
+
+  if (lastOtaResponseSequence != sequence)
+  {
+    return 0;
+  }
+
+  if (lastOtaResponseDetail != detail)
+  {
+    return 0;
+  }
+
+  if (lastOtaResponseState != state)
+  {
+    return 0;
+  }
+
+  return 1;
+}
+
+byte expectOtaResponseNoState(byte command, byte sequence, byte responseCode, byte detail)
+{
+  if (otaChecksumFail != 0)
+  {
+    return 0;
+  }
+
+  if (otaResponseSeen == 0)
+  {
+    return 0;
+  }
+
+  if (lastOtaResponseCode != responseCode)
+  {
+    return 0;
+  }
+
+  if (lastOtaResponseCommand != command)
+  {
+    return 0;
+  }
+
+  if (lastOtaResponseSequence != sequence)
+  {
+    return 0;
+  }
+
+  if (lastOtaResponseDetail != detail)
+  {
+    return 0;
+  }
+
+  return 1;
+}
+
+byte sendOtaDataAndExpectAck(byte sequence, byte payloadLength, byte startValue)
+{
+  resetOtaObservation();
+  sendOtaDataFrame(sequence, payloadLength, startValue);
+  testWaitForTimeout(120);
+
+  return expectOtaResponse(0x02, sequence, 0x79, 0x00, 2);
+}
+
+byte unlockSecurity(byte seedSequence, byte keySequence)
+{
+  resetOtaObservation();
+  sendOtaCommand(0x10, seedSequence);
+  testWaitForTimeout(250);
+
+  if ((otaResponseSeen == 0) ||
+      (lastOtaResponseCode != 0x79) ||
+      (lastOtaResponseCommand != 0x10) ||
+      (lastOtaResponseSequence != seedSequence))
+  {
+    return 0;
+  }
+
+  lastSecuritySeed = lastOtaResponseDetail;
+
+  resetOtaObservation();
+  sendOtaCommandWithByte2(0x11, keySequence, (byte)(lastSecuritySeed ^ 0xA5));
+  testWaitForTimeout(250);
+
+  if (expectOtaResponseNoState(0x11, keySequence, 0x79, 0x00) == 0)
+  {
+    return 0;
+  }
+
+  testWaitForTimeout(150);
+
+  return 1;
+}
+
+byte sendWrongKeyAttempt(byte seedSequence, byte keySequence)
+{
+  resetOtaObservation();
+  sendOtaCommand(0x10, seedSequence);
+  testWaitForTimeout(250);
+
+  if ((otaResponseSeen == 0) ||
+      (lastOtaResponseCode != 0x79) ||
+      (lastOtaResponseCommand != 0x10) ||
+      (lastOtaResponseSequence != seedSequence))
+  {
+    return 0;
+  }
+
+  lastSecuritySeed = lastOtaResponseDetail;
+
+  resetOtaObservation();
+  sendOtaCommandWithByte2(0x11, keySequence, (byte)(lastSecuritySeed ^ 0xA4));
+  testWaitForTimeout(250);
+
+  return expectOtaResponseNoState(0x11, keySequence, 0x7F, 0x22);
+}
+
+testcase TC_ECU6_006_OTA_RequestResponse()
+{
+  resetOtaObservation();
+
+  testStep("OTA", "Send REQUEST_SEED on 0x650 and expect ACK on 0x651");
+  sendOtaCommand(0x10, 0x00);
+  testWaitForTimeout(250);
+
+  if ((otaResponseSeen != 0) &&
+      (lastOtaResponseCode == 0x79) &&
+      (lastOtaResponseCommand == 0x10) &&
+      (lastOtaResponseSequence == 0x00))
+  {
+    testStepPass("0x650 REQUEST_SEED produced 0x651 ACK with seed byte");
+  }
+  else
+  {
+    testStepFail("0x650 REQUEST_SEED did not produce expected 0x651 ACK");
+  }
+}
+
+testcase TC_ECU6_010_OTARejectWithoutSecurity()
+{
+  resetOtaObservation();
+
+  testStep("Security", "REQUEST_SEED locks OTA, then START must be rejected before SEND_KEY");
+  sendOtaCommand(0x10, 0x01);
+  testWaitForTimeout(150);
+
+  resetOtaObservation();
+  sendOtaCommand(0x01, 0x02);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponseNoState(0x01, 0x02, 0x7F, 0x20) != 0)
+  {
+    testStepPass("OTA_START was rejected while security was locked");
+  }
+  else
+  {
+    testStepFail("OTA_START was not rejected while security was locked");
+  }
+}
+
+testcase TC_ECU6_011_SecurityUnlockOK()
+{
+  gatewayStatusSeen = 0;
+
+  testStep("Security", "REQUEST_SEED then SEND_KEY should unlock OTA");
+
+  if (unlockSecurity(0x03, 0x04) != 0)
+  {
+    testWaitForTimeout(250);
+
+    if ((gatewayStatusSeen != 0) &&
+        (lastGatewaySecurityUnlocked != 0) &&
+        (lastGatewaySecurityLocked == 0))
+    {
+      testStepPass("Security unlock accepted correct key and GatewayStatus reports unlocked");
+    }
+    else
+    {
+      testStepFail("Security unlock response passed, but GatewayStatus did not report unlocked");
+    }
+  }
+  else
+  {
+    testStepFail("Security unlock did not accept correct key");
+  }
+}
+
+testcase TC_ECU6_011_SecurityUnlockFail()
+{
+  byte beforeErrorCounter;
+
+  resetOtaObservation();
+  beforeErrorCounter = lastGatewaySecurityErrorCounter;
+  gatewayStatusSeen = 0;
+
+  testStep("Security", "Wrong key should increment security error counter and keep OTA locked");
+  sendOtaCommand(0x10, 0x05);
+  testWaitForTimeout(250);
+
+  if (lastOtaResponseCode == 0x79)
+  {
+    lastSecuritySeed = lastOtaResponseDetail;
+  }
+
+  resetOtaObservation();
+  sendOtaCommandWithByte2(0x11, 0x06, (byte)(lastSecuritySeed ^ 0xA4));
+  testWaitForTimeout(250);
+
+  if (expectOtaResponseNoState(0x11, 0x06, 0x7F, 0x22) != 0)
+  {
+    testWaitForTimeout(250);
+
+    if ((gatewayStatusSeen != 0) &&
+        (lastGatewaySecurityLocked != 0) &&
+        (lastGatewaySecurityUnlocked == 0) &&
+        (lastGatewaySecurityErrorCounter != beforeErrorCounter))
+    {
+      testStepPass("Wrong key produced NACK detail 0x22 and GatewayStatus reports locked");
+    }
+    else
+    {
+      testStepFail("Wrong key response passed, but GatewayStatus did not report locked/error");
+    }
+  }
+  else
+  {
+    testStepFail("Wrong key did not produce expected NACK");
+  }
+}
+
+testcase TC_ECU6_008_OTADataBuffer100Bytes()
+{
+  int i;
+  byte sequence;
+  byte allDataAccepted;
+  byte payloadChecksum;
+
+  allDataAccepted = 1;
+  payloadChecksum = 0x00;
+
+  testStep("OTA", "Unlock and START before 100-byte OTA_DATA transfer");
+  if (unlockSecurity(0x31, 0x32) == 0)
+  {
+    testStepFail("Security unlock failed before OTA data buffer test");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x01, 0x33);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x01, 0x33, 0x79, 0x00, 1) == 0)
+  {
+    testStepFail("OTA START was not accepted before 100-byte transfer");
+    return;
+  }
+
+  testStep("OTA", "Send 25 OTA_DATA frames with 4 bytes each");
+  for (i = 0; i < 25; i++)
+  {
+    sequence = (byte)(0x40 + i);
+    payloadChecksum = updateOtaPayloadChecksum(payloadChecksum, 0x04, (byte)(0x20 + i));
+
+    if (sendOtaDataAndExpectAck(sequence, 0x04, (byte)(0x20 + i)) == 0)
+    {
+      allDataAccepted = 0;
+      break;
+    }
+  }
+
+  if (allDataAccepted != 0)
+  {
+    testStepPass("100-byte OTA_DATA transfer was accepted");
+  }
+  else
+  {
+    testStepFail("100-byte OTA_DATA transfer was not fully accepted");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaEndWithChecksum(0x60, payloadChecksum);
+  testWaitForTimeout(150);
+
+  if (expectOtaResponse(0x03, 0x60, 0x79, 0x00, 3) != 0)
+  {
+    testStepPass("END after 100-byte transfer entered VERIFYING");
+  }
+  else
+  {
+    testStepFail("END after 100-byte transfer was not accepted");
+    return;
+  }
+
+  gatewayStatusSeen = 0;
+  testWaitForTimeout(300);
+
+  if ((gatewayStatusSeen != 0) && (lastGatewayOtaState == 4))
+  {
+    testStepPass("100-byte transfer reached READY_TO_ACTIVATE");
+  }
+  else
+  {
+    testStepFail("100-byte transfer did not reach READY_TO_ACTIVATE");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x04, 0x61);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x04, 0x61, 0x79, 0x00, 5) != 0)
+  {
+    testStepPass("100-byte update activated successfully");
+  }
+  else
+  {
+    testStepFail("100-byte update activation did not reach SUCCESS");
+  }
+}
+
+testcase TC_ECU6_008_OTADataBufferOverflow()
+{
+  int i;
+  byte sequence;
+  byte fillAccepted;
+
+  fillAccepted = 1;
+
+  testStep("OTA", "Fill the 256-byte OTA buffer, then send one extra byte");
+  if (unlockSecurity(0x34, 0x35) == 0)
+  {
+    testStepFail("Security unlock failed before OTA overflow test");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x01, 0x36);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x01, 0x36, 0x79, 0x00, 1) == 0)
+  {
+    testStepFail("OTA START was not accepted before overflow test");
+    return;
+  }
+
+  for (i = 0; i < 64; i++)
+  {
+    sequence = (byte)(0x80 + i);
+
+    if (sendOtaDataAndExpectAck(sequence, 0x04, (byte)(0x40 + i)) == 0)
+    {
+      fillAccepted = 0;
+      break;
+    }
+  }
+
+  resetOtaObservation();
+  sendOtaDataFrame(0xC1, 0x01, 0x88);
+  testWaitForTimeout(150);
+
+  if ((fillAccepted != 0) &&
+      (expectOtaResponse(0x02, 0xC1, 0x7F, 0x16, 6) != 0))
+  {
+    testStepPass("OTA_DATA overflow was rejected with NACK detail 0x16");
+  }
+  else
+  {
+    testStepFail("OTA_DATA overflow was not rejected as expected");
+  }
+}
+
+testcase TC_ECU6_009_OTAChecksumOK()
+{
+  byte payloadChecksum;
+
+  payloadChecksum = 0x00;
+
+  testStep("OTA CRC", "Correct OTA payload checksum should reach READY_TO_ACTIVATE and SUCCESS");
+  if (unlockSecurity(0x70, 0x71) == 0)
+  {
+    testStepFail("Security unlock failed before OTA checksum OK test");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x01, 0x72);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x01, 0x72, 0x79, 0x00, 1) == 0)
+  {
+    testStepFail("OTA START was not accepted before checksum OK test");
+    return;
+  }
+
+  payloadChecksum = updateOtaPayloadChecksum(payloadChecksum, 0x04, 0x10);
+  if (sendOtaDataAndExpectAck(0x73, 0x04, 0x10) == 0)
+  {
+    testStepFail("First OTA_DATA frame was not accepted");
+    return;
+  }
+
+  payloadChecksum = updateOtaPayloadChecksum(payloadChecksum, 0x03, 0x20);
+  if (sendOtaDataAndExpectAck(0x74, 0x03, 0x20) == 0)
+  {
+    testStepFail("Second OTA_DATA frame was not accepted");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaEndWithChecksum(0x75, payloadChecksum);
+  testWaitForTimeout(150);
+
+  if (expectOtaResponse(0x03, 0x75, 0x79, 0x00, 3) == 0)
+  {
+    testStepFail("END with correct checksum did not enter VERIFYING");
+    return;
+  }
+
+  gatewayStatusSeen = 0;
+  testWaitForTimeout(300);
+
+  if ((gatewayStatusSeen == 0) || (lastGatewayOtaState != 4))
+  {
+    testStepFail("Correct checksum did not produce VERIFY_OK/READY_TO_ACTIVATE");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x04, 0x76);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x04, 0x76, 0x79, 0x00, 5) != 0)
+  {
+    testStepPass("Correct checksum produced VERIFY_OK and activation SUCCESS");
+  }
+  else
+  {
+    testStepFail("Activation after correct checksum did not reach SUCCESS");
+  }
+}
+
+testcase TC_ECU6_009_OTAChecksumFail()
+{
+  byte payloadChecksum;
+  byte wrongChecksum;
+  byte beforeVersion;
+
+  payloadChecksum = 0x00;
+
+  testStep("OTA CRC", "Wrong OTA payload checksum should produce OTA_FAILED");
+  gatewayStatusSeen = 0;
+  testWaitForTimeout(250);
+
+  if (gatewayStatusSeen == 0)
+  {
+    testStepFail("GatewayStatus was not observed before checksum fail test");
+    return;
+  }
+
+  beforeVersion = lastGatewayActiveSwVersion;
+
+  if (unlockSecurity(0x78, 0x79) == 0)
+  {
+    testStepFail("Security unlock failed before OTA checksum fail test");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x01, 0x7A);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x01, 0x7A, 0x79, 0x00, 1) == 0)
+  {
+    testStepFail("OTA START was not accepted before checksum fail test");
+    return;
+  }
+
+  payloadChecksum = updateOtaPayloadChecksum(payloadChecksum, 0x04, 0x30);
+  if (sendOtaDataAndExpectAck(0x7B, 0x04, 0x30) == 0)
+  {
+    testStepFail("OTA_DATA frame was not accepted before checksum fail test");
+    return;
+  }
+
+  wrongChecksum = (byte)(payloadChecksum ^ 0xFF);
+
+  resetOtaObservation();
+  sendOtaEndWithChecksum(0x7C, wrongChecksum);
+  testWaitForTimeout(150);
+
+  if ((expectOtaResponse(0x03, 0x7C, 0x7F, 0x17, 6) != 0) &&
+      (lastOtaResponseActiveSwVersion == beforeVersion))
+  {
+    gatewayStatusSeen = 0;
+    testWaitForTimeout(250);
+
+    if ((gatewayStatusSeen != 0) &&
+        (lastGatewayActiveSwVersion == beforeVersion))
+    {
+      testStepPass("Wrong checksum produced OTA_FAILED and ActiveSWVersion stayed unchanged");
+    }
+    else
+    {
+      testStepFail("Wrong checksum response passed, but GatewayStatus ActiveSWVersion changed");
+    }
+  }
+  else
+  {
+    testStepFail("Wrong checksum did not produce expected OTA_FAILED response or version changed");
+  }
+}
+
+testcase TC_ECU6_012_OTADataAuthFail()
+{
+  byte validAuth;
+  byte wrongAuth;
+  byte beforeErrorCounter;
+
+  testStep("OTA Auth", "Wrong OTA_DATA AuthByte should be rejected");
+  if (unlockSecurity(0x90, 0x91) == 0)
+  {
+    testStepFail("Security unlock failed before OTA auth test");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x01, 0x92);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x01, 0x92, 0x79, 0x00, 1) == 0)
+  {
+    testStepFail("OTA START was not accepted before auth test");
+    return;
+  }
+
+  beforeErrorCounter = lastGatewaySecurityErrorCounter;
+  gatewayStatusSeen = 0;
+  validAuth = calcOtaDataAuth(0x93, 0x04);
+  wrongAuth = (byte)(validAuth ^ 0xFF);
+
+  resetOtaObservation();
+  sendOtaDataFrameWithAuth(0x93, 0x04, 0x44, wrongAuth);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x02, 0x93, 0x7F, 0x18, 6) != 0)
+  {
+    testWaitForTimeout(250);
+
+    if ((gatewayStatusSeen != 0) &&
+        (lastGatewaySecurityErrorCounter != beforeErrorCounter))
+    {
+      testStepPass("Wrong OTA_DATA AuthByte produced NACK detail 0x18 and error counter increment");
+    }
+    else
+    {
+      testStepFail("Wrong AuthByte was rejected, but SecurityErrorCounter did not change");
+    }
+  }
+  else
+  {
+    testStepFail("Wrong OTA_DATA AuthByte did not produce expected NACK");
+  }
+}
+
+testcase TC_ECU6_013_SecurityLockoutAfterThreeFailures()
+{
+  byte beforeErrorCounter;
+
+  testStep("Security", "Three wrong security attempts should lock OTA until timeout");
+
+  if (unlockSecurity(0xA0, 0xA1) == 0)
+  {
+    testStepFail("Security unlock failed before lockout test setup");
+    return;
+  }
+
+  beforeErrorCounter = lastGatewaySecurityErrorCounter;
+  gatewayStatusSeen = 0;
+
+  if ((sendWrongKeyAttempt(0xA2, 0xA3) == 0) ||
+      (sendWrongKeyAttempt(0xA4, 0xA5) == 0) ||
+      (sendWrongKeyAttempt(0xA6, 0xA7) == 0))
+  {
+    testStepFail("Wrong key attempts did not produce expected NACK detail 0x22");
+    return;
+  }
+
+  testWaitForTimeout(300);
+
+  if ((gatewayStatusSeen == 0) ||
+      (lastGatewaySecurityLocked == 0) ||
+      (lastGatewaySecurityUnlocked != 0) ||
+      (lastGatewaySecurityErrorCounter == beforeErrorCounter))
+  {
+    testStepFail("GatewayStatus did not report locked security after three failures");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x10, 0xA8);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponseNoState(0x10, 0xA8, 0x7F, 0x23) != 0)
+  {
+    testStepPass("REQUEST_SEED was rejected with lockout detail 0x23");
+  }
+  else
+  {
+    testStepFail("REQUEST_SEED was not rejected during lockout");
+    return;
+  }
+
+  testWaitForTimeout(3500);
+
+  resetOtaObservation();
+  sendOtaCommand(0x10, 0xA9);
+  testWaitForTimeout(250);
+
+  if ((otaResponseSeen != 0) &&
+      (lastOtaResponseCode == 0x79) &&
+      (lastOtaResponseCommand == 0x10) &&
+      (lastOtaResponseSequence == 0xA9))
+  {
+    testStepPass("REQUEST_SEED was accepted again after lockout timeout");
+  }
+  else
+  {
+    testStepFail("REQUEST_SEED was not accepted after lockout timeout");
+  }
+}
+
+testcase TC_ECU6_015_ActiveSWVersionUpdateAfterActivation()
+{
+  byte beforeVersion;
+  byte expectedVersion;
+  byte payloadChecksum;
+
+  payloadChecksum = 0x00;
+
+  testStep("OTA Version", "ActiveSWVersion must change only after verified ACTIVATE");
+
+  gatewayStatusSeen = 0;
+  testWaitForTimeout(250);
+
+  if (gatewayStatusSeen == 0)
+  {
+    testStepFail("GatewayStatus was not observed before version test");
+    return;
+  }
+
+  beforeVersion = lastGatewayActiveSwVersion;
+  expectedVersion = nextActiveSwVersion(beforeVersion);
+
+  if (unlockSecurity(0xB0, 0xB1) == 0)
+  {
+    testStepFail("Security unlock failed before ActiveSWVersion test");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x01, 0xB2);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x01, 0xB2, 0x79, 0x00, 1) == 0)
+  {
+    testStepFail("OTA START was not accepted before ActiveSWVersion test");
+    return;
+  }
+
+  payloadChecksum = updateOtaPayloadChecksum(payloadChecksum, 0x04, 0x66);
+  if (sendOtaDataAndExpectAck(0xB3, 0x04, 0x66) == 0)
+  {
+    testStepFail("OTA_DATA was not accepted before ActiveSWVersion test");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaEndWithChecksum(0xB4, payloadChecksum);
+  testWaitForTimeout(150);
+
+  if (expectOtaResponse(0x03, 0xB4, 0x79, 0x00, 3) == 0)
+  {
+    testStepFail("OTA_END with correct checksum did not enter VERIFYING");
+    return;
+  }
+
+  gatewayStatusSeen = 0;
+  testWaitForTimeout(300);
+
+  if ((gatewayStatusSeen == 0) ||
+      (lastGatewayOtaState != 4) ||
+      (lastGatewayActiveSwVersion != beforeVersion))
+  {
+    testStepFail("ActiveSWVersion changed before ACTIVATE or READY_TO_ACTIVATE was not observed");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x04, 0xB5);
+  testWaitForTimeout(250);
+
+  if ((expectOtaResponse(0x04, 0xB5, 0x79, 0x00, 5) != 0) &&
+      (lastOtaResponseActiveSwVersion == expectedVersion))
+  {
+    testStepPass("ACTIVATE response reports updated ActiveSWVersion");
+  }
+  else
+  {
+    testStepFail("ACTIVATE did not update ActiveSWVersion in OTA response");
+    return;
+  }
+
+  gatewayStatusSeen = 0;
+  testWaitForTimeout(250);
+
+  if ((gatewayStatusSeen != 0) &&
+      (lastGatewayOtaState == 5) &&
+      (lastGatewayActiveSwVersion == expectedVersion))
+  {
+    testStepPass("GatewayStatus reports updated ActiveSWVersion after activation");
+  }
+  else
+  {
+    testStepFail("GatewayStatus did not report updated ActiveSWVersion after activation");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x04, 0xB6);
+  testWaitForTimeout(250);
+
+  if ((expectOtaResponse(0x04, 0xB6, 0x7F, 0x14, 6) != 0) &&
+      (lastOtaResponseActiveSwVersion == expectedVersion))
+  {
+    testStepPass("Second ACTIVATE without a new verified OTA did not update version again");
+  }
+  else
+  {
+    testStepFail("Invalid second ACTIVATE changed version or returned unexpected response");
+  }
+}
+
+testcase TC_ECU6_005_OTA_StateMachine_FullPath()
+{
+  byte readySeen;
+  byte payloadChecksum;
+
+  readySeen = 0;
+  payloadChecksum = 0x00;
+
+  testStep("Security", "Unlock before OTA state-machine full path");
+  if (unlockSecurity(0x08, 0x09) == 0)
+  {
+    testStepFail("Security unlock failed before OTA full path");
+    return;
+  }
+
+  resetOtaObservation();
+  testStep("OTA", "START -> OTAState START");
+  sendOtaCommand(0x01, 0x10);
+  testWaitForTimeout(250);
+  if (expectOtaResponse(0x01, 0x10, 0x79, 0x00, 1) != 0)
+  {
+    testStepPass("START state observed");
+  }
+  else
+  {
+    testStepFail("START state was not observed");
+  }
+
+  resetOtaObservation();
+  testStep("OTA", "DATA -> OTAState RECEIVING");
+  payloadChecksum = updateOtaPayloadChecksum(payloadChecksum, 0x01, 0x55);
+  sendOtaDataFrame(0x11, 0x01, 0x55);
+  testWaitForTimeout(250);
+  if (expectOtaResponse(0x02, 0x11, 0x79, 0x00, 2) != 0)
+  {
+    testStepPass("RECEIVING state observed");
+  }
+  else
+  {
+    testStepFail("RECEIVING state was not observed");
+  }
+
+  resetOtaObservation();
+  testStep("OTA", "END -> OTAState VERIFYING");
+  sendOtaEndWithChecksum(0x12, payloadChecksum);
+  testWaitForTimeout(100);
+  if (expectOtaResponse(0x03, 0x12, 0x79, 0x00, 3) != 0)
+  {
+    testStepPass("VERIFYING state observed");
+  }
+  else
+  {
+    testStepFail("VERIFYING state was not observed");
+  }
+
+  testStep("OTA", "0x601 should publish READY_TO_ACTIVATE after verification");
+  testWaitForTimeout(300);
+  if ((gatewayStatusSeen != 0) && (lastGatewayOtaState == 4))
+  {
+    readySeen = 1;
+    testStepPass("READY_TO_ACTIVATE state observed on 0x601");
+  }
+  else
+  {
+    testStepFail("READY_TO_ACTIVATE state was not observed on 0x601");
+  }
+
+  resetOtaObservation();
+  testStep("OTA", "ACTIVATE -> OTAState SUCCESS");
+  sendOtaCommand(0x04, 0x13);
+  testWaitForTimeout(250);
+  if ((readySeen != 0) && (expectOtaResponse(0x04, 0x13, 0x79, 0x00, 5) != 0))
+  {
+    testStepPass("SUCCESS state observed");
+  }
+  else
+  {
+    testStepFail("SUCCESS state was not observed");
+  }
+
+  resetOtaObservation();
+  testStep("OTA", "ABORT -> OTAState FAILED");
+  sendOtaCommand(0x05, 0x14);
+  testWaitForTimeout(250);
+  if (expectOtaResponse(0x05, 0x14, 0x79, 0x00, 6) != 0)
+  {
+    testStepPass("FAILED state observed");
+  }
+  else
+  {
+    testStepFail("FAILED state was not observed");
+  }
+}
+
+testcase TC_ECU6_005_OTA_InvalidSequence()
+{
+  resetOtaObservation();
+
+  testStep("Security", "Unlock before invalid sequence check");
+  if (unlockSecurity(0x18, 0x19) == 0)
+  {
+    testStepFail("Security unlock failed before invalid sequence check");
+    return;
+  }
+
+  resetOtaObservation();
+  sendOtaCommand(0x04, 0x21);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x04, 0x21, 0x7F, 0x14, 6) != 0)
+  {
+    testStepPass("Invalid ACTIVATE sequence produced NACK and FAILED state");
+  }
+  else
+  {
+    testStepFail("Invalid ACTIVATE sequence did not produce expected NACK");
+  }
+}
+
+testcase TC_ECU6_005_OTA_UnknownCommand()
+{
+  resetOtaObservation();
+
+  testStep("OTA", "Unknown command should return NACK detail 0x12");
+  sendOtaCommand(0x00, 0x30);
+  testWaitForTimeout(250);
+
+  if (expectOtaResponse(0x00, 0x30, 0x7F, 0x12, lastOtaResponseState) != 0)
+  {
+    testStepPass("Unknown command produced expected NACK");
+  }
+  else
+  {
+    testStepFail("Unknown command did not produce expected NACK");
+  }
+}
+
+void MainTest()
+{
+  TC_ECU6_006_OTA_RequestResponse();
+  TC_ECU6_010_OTARejectWithoutSecurity();
+  TC_ECU6_011_SecurityUnlockOK();
+  TC_ECU6_011_SecurityUnlockFail();
+  TC_ECU6_008_OTADataBuffer100Bytes();
+  TC_ECU6_008_OTADataBufferOverflow();
+  TC_ECU6_009_OTAChecksumOK();
+  TC_ECU6_009_OTAChecksumFail();
+  TC_ECU6_012_OTADataAuthFail();
+  TC_ECU6_013_SecurityLockoutAfterThreeFailures();
+  TC_ECU6_015_ActiveSWVersionUpdateAfterActivation();
+  TC_ECU6_005_OTA_StateMachine_FullPath();
+  TC_ECU6_005_OTA_InvalidSequence();
+  TC_ECU6_005_OTA_UnknownCommand();
+}

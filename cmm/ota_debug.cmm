@@ -1,0 +1,85 @@
+; ============================================================================
+; ECU6 OTA TRACE32 placeholder script
+; Requirement: REQ-ECU6-016
+;
+; Verifies the REQ-ECU6-006 transport foundation, REQ-ECU6-005
+; OTA state-machine transitions, REQ-ECU6-008 OTA data buffer,
+; REQ-ECU6-009 checksum, REQ-ECU6-012 AuthByte, and
+; REQ-ECU6-015 ActiveSWVersion activation update.
+; ============================================================================
+
+PRIVATE &PROJECT_ROOT
+PRIVATE &ELF_FILE
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+AREA.RESet
+AREA.Create ECU6_OTA
+AREA.Select ECU6_OTA
+
+PRINT "ECU6 ota_debug.cmm"
+PRINT "Watching OTA 0x650 request and 0x651 response transport."
+
+IF OS.FILE("&ELF_FILE")
+(
+  Data.LOAD.Elf &ELF_FILE /NoCODE
+)
+
+Break.Delete
+Break.Set OTA_HandleRequestMessage /Program
+Break.Set CAN_SendOtaResponse /Program
+Break.Set COM_GatewayBuildStatusMessage /Program
+
+WinPOS 0. 0. 74. 37. 0. 0. W001
+List.Mix OTA_HandleRequestMessage
+
+WinPOS 75. 0. 55. 37. 0. 0. W002
+Var.Watch
+VAR.ADDWATCH otaState
+VAR.ADDWATCH lastOtaCommand
+VAR.ADDWATCH otaResponseCounter
+VAR.ADDWATCH activeSwVersion
+VAR.ADDWATCH securityUnlocked
+VAR.ADDWATCH securityLocked
+VAR.ADDWATCH otaDataLength
+VAR.ADDWATCH otaDataOverflow
+VAR.ADDWATCH otaDataBuffer
+VAR.ADDWATCH otaExpectedChecksum
+VAR.ADDWATCH otaCalculatedChecksum
+VAR.ADDWATCH otaVerifyOk
+VAR.ADDWATCH otaExpectedAuth
+VAR.ADDWATCH otaReceivedAuth
+
+WinPOS 0. 38. 63. 17. 0. 0. W003
+Break.List
+
+WinPOS 64. 38. 32. 17. 0. 0. W004
+Register.view
+
+WinPOS 97. 38. 33. 17. 0. 0. W005
+Frame.view
+
+PRINT "Current expectation:"
+PRINT " - OTA_HandleRequestMessage breaks when CAN ID 0x650 is received"
+PRINT " - CAN_SendOtaResponse breaks when ECU6 sends CAN ID 0x651"
+PRINT " - Internal OTA helper breakpoints were removed because they are static/inlined in this build"
+PRINT " - REQUEST_SEED 0x10 then SEND_KEY 0x11 must unlock before START"
+PRINT " - START -> START, DATA -> RECEIVING, END -> VERIFYING"
+PRINT " - OTA_DATA 0x02 uses Byte2 length, Byte3 AuthByte, Byte4..Byte7 payload"
+PRINT " - AuthByte = seed XOR sequence XOR length XOR 0xC3"
+PRINT " - otaDataLength accepts up to 256 bytes"
+PRINT " - wrong AuthByte returns 0x651 NACK detail 0x18 and OTA state FAILED"
+PRINT " - overflow returns 0x651 NACK detail 0x16 and OTA state FAILED"
+PRINT " - OTA_END 0x03 uses Byte2 expected payload checksum"
+PRINT " - correct checksum: VERIFYING then READY_TO_ACTIVATE"
+PRINT " - wrong checksum: 0x651 NACK detail 0x17 and OTA state FAILED"
+PRINT " - ACTIVATE from READY_TO_ACTIVATE -> SUCCESS and ActiveSWVersion increments"
+PRINT " - ActiveSWVersion must not change on checksum failure or invalid ACTIVATE"
+PRINT " - ABORT or invalid sequence -> FAILED"
+
+Go

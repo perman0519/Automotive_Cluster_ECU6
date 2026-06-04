@@ -1,0 +1,104 @@
+; ============================================================================
+; Automotive Cluster TRACE32 dashboard startup script
+;
+; Usage:
+;   DO cmm\startup_dashboard.cmm
+;
+; This script prepares a useful TRACE32 debug desktop for the current project
+; and installs Automotive Cluster toolbar buttons from automotive_toolbar.cmm.
+; ============================================================================
+
+ENTRY %LINE &parameters
+
+GLOBAL &PROJECT_ROOT
+GLOBAL &ELF_FILE
+GLOBAL &TARGET_CPU
+
+&PROJECT_ROOT="C:\Users\JunsangS\workspaceS32DS.Power.2.1\Automotive_Cluster"
+&ELF_FILE="&PROJECT_ROOT\Debug_FLASH\Automotive_Cluster.elf"
+&TARGET_CPU="MPC5748G"
+
+TOOLBAR ON
+STATUSBAR ON
+WinPAGE.RESet
+WinPAGE.Create P000
+WinPAGE.Select P000
+WinCLEAR
+
+AREA.RESet
+AREA.Create Automotive_Dashboard
+AREA.Select Automotive_Dashboard
+
+PRINT "Automotive Cluster TRACE32 dashboard"
+PRINT "Project: &PROJECT_ROOT"
+PRINT "ELF: &ELF_FILE"
+
+; Basic target defaults. If your board startup CMM already configures these,
+; run that board startup first and then run this dashboard script.
+SYStem.CPU &TARGET_CPU
+SYStem.Option MMUSPACES OFF
+
+IF OS.FILE("&ELF_FILE")
+(
+  Data.LOAD.Elf &ELF_FILE /NoCODE
+)
+ELSE
+(
+  PRINT "ELF not found. Build the project first: &ELF_FILE"
+)
+
+; Open the windows normally needed for review/debug screenshots.
+WinPOS 0. 0. 68. 33. 0. 0. W001
+List.Mix main
+
+WinPOS 69. 0. 61. 33. 0. 0. W002
+Var.Watch
+
+WinPOS 0. 34. 44. 17. 0. 0. W003
+Register.view
+
+WinPOS 45. 34. 44. 17. 0. 0. W004
+Break.List
+
+WinPOS 90. 34. 40. 17. 0. 0. W005
+Frame.view
+
+WinPOS 0. 52. 130. 16. 0. 0. W006
+SYStem.state
+
+; Gateway / runtime state.
+VAR.ADDWATCH gatewayState
+VAR.ADDWATCH gatewayRxMask
+VAR.ADDWATCH blockedMsgCnt
+VAR.ADDWATCH aliveCounter
+VAR.ADDWATCH rxMonitors
+
+; OTA / security state.
+VAR.ADDWATCH otaState
+VAR.ADDWATCH lastOtaCommand
+VAR.ADDWATCH otaResponseCounter
+VAR.ADDWATCH activeSwVersion
+VAR.ADDWATCH securityUnlocked
+VAR.ADDWATCH securityLocked
+VAR.ADDWATCH securityErrorCounter
+VAR.ADDWATCH securityFailureStreak
+VAR.ADDWATCH securityLockoutActive
+
+; Interrupt / driver evidence.
+VAR.ADDWATCH bufferIdx
+VAR.ADDWATCH otaDataLength
+VAR.ADDWATCH otaDataOverflow
+VAR.ADDWATCH otaVerifyOk
+
+IF OS.FILE("&PROJECT_ROOT\cmm\automotive_toolbar.cmm")
+(
+  DO "&PROJECT_ROOT\cmm\automotive_toolbar.cmm"
+)
+ELSE
+(
+  PRINT "Toolbar script not found: &PROJECT_ROOT\cmm\automotive_toolbar.cmm"
+)
+
+PRINT "Dashboard ready. Use the Automotive Cluster toolbar buttons."
+
+ENDDO

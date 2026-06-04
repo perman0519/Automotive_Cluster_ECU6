@@ -1,0 +1,198 @@
+/*@!Encoding:1252*/
+variables
+{
+  message 0x650 OtaRequest;
+
+  byte panelSequence = 0;
+  byte lastSeed = 0;
+  byte lastPayloadChecksum = 0;
+}
+
+byte calcChecksum(long canId, byte d0, byte d1, byte d2, byte d3, byte d4, byte d5, byte d6)
+{
+  byte checksum;
+
+  checksum = (byte)(canId & 0xFF);
+  checksum = checksum ^ d0;
+  checksum = checksum ^ d1;
+  checksum = checksum ^ d2;
+  checksum = checksum ^ d3;
+  checksum = checksum ^ d4;
+  checksum = checksum ^ d5;
+  checksum = checksum ^ d6;
+
+  return checksum;
+}
+
+byte nextSequence()
+{
+  panelSequence = (panelSequence + 1) & 0xFF;
+  return panelSequence;
+}
+
+void sendOtaCommand(byte command, byte byte2, byte byte3, byte d4, byte d5, byte d6, byte d7)
+{
+  OtaRequest.dlc = 8;
+  OtaRequest.byte(0) = command;
+  OtaRequest.byte(1) = nextSequence();
+  OtaRequest.byte(2) = byte2;
+  OtaRequest.byte(3) = byte3;
+  OtaRequest.byte(4) = d4;
+  OtaRequest.byte(5) = d5;
+  OtaRequest.byte(6) = d6;
+  OtaRequest.byte(7) = d7;
+  output(OtaRequest);
+}
+
+byte calcOtaDataAuth(byte sequence, byte payloadLength)
+{
+  return (byte)(lastSeed ^ sequence ^ payloadLength ^ 0xC3);
+}
+
+on message 0x601
+{
+  byte flags;
+  byte expectedChecksum;
+
+  expectedChecksum = calcChecksum(this.id,
+                                  this.byte(0),
+                                  this.byte(1),
+                                  this.byte(2),
+                                  this.byte(3),
+                                  this.byte(4),
+                                  this.byte(5),
+                                  this.byte(6));
+
+  if (this.byte(7) != expectedChecksum)
+  {
+    @sysvar::ECU6Panel::GatewayChecksumError = 1;
+    return;
+  }
+
+  flags = this.byte(1);
+  @sysvar::ECU6Panel::OtaState = flags & 0x07;
+  @sysvar::ECU6Panel::SecurityUnlocked = (flags >> 3) & 0x01;
+  @sysvar::ECU6Panel::SecurityLocked = (flags >> 4) & 0x01;
+  @sysvar::ECU6Panel::BlockedMessageCount = this.byte(2);
+  @sysvar::ECU6Panel::ActiveSwVersion = this.byte(4);
+  @sysvar::ECU6Panel::GatewayChecksumError = 0;
+}
+
+on message 0x651
+{
+  byte expectedChecksum;
+
+  expectedChecksum = calcChecksum(this.id,
+                                  this.byte(0),
+                                  this.byte(1),
+                                  this.byte(2),
+                                  this.byte(3),
+                                  this.byte(4),
+                                  this.byte(5),
+                                  this.byte(6));
+
+  if (this.byte(7) != expectedChecksum)
+  {
+    @sysvar::ECU6Panel::GatewayChecksumError = 1;
+    return;
+  }
+
+  @sysvar::ECU6Panel::LastResponseCode = this.byte(0);
+  @sysvar::ECU6Panel::LastResponseDetail = this.byte(3);
+  @sysvar::ECU6Panel::OtaState = this.byte(4) & 0x07;
+  @sysvar::ECU6Panel::ActiveSwVersion = this.byte(5);
+
+  if ((this.byte(0) == 0x79) && (this.byte(1) == 0x10))
+  {
+    lastSeed = this.byte(3);
+    @sysvar::ECU6Panel::LastSeed = lastSeed;
+  }
+}
+
+on sysvar ECU6Panel::RequestSeed
+{
+  if (@sysvar::ECU6Panel::RequestSeed != 0)
+  {
+    sendOtaCommand(0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+    @sysvar::ECU6Panel::RequestSeed = 0;
+  }
+}
+
+on sysvar ECU6Panel::SendCorrectKey
+{
+  if (@sysvar::ECU6Panel::SendCorrectKey != 0)
+  {
+    sendOtaCommand(0x11, (byte)(lastSeed ^ 0xA5), 0x00, 0x00, 0x00, 0x00, 0x00);
+    @sysvar::ECU6Panel::SendCorrectKey = 0;
+  }
+}
+
+on sysvar ECU6Panel::SendWrongKey
+{
+  if (@sysvar::ECU6Panel::SendWrongKey != 0)
+  {
+    sendOtaCommand(0x11, (byte)(lastSeed ^ 0xA4), 0x00, 0x00, 0x00, 0x00, 0x00);
+    @sysvar::ECU6Panel::SendWrongKey = 0;
+  }
+}
+
+on sysvar ECU6Panel::OtaStart
+{
+  if (@sysvar::ECU6Panel::OtaStart != 0)
+  {
+    lastPayloadChecksum = 0;
+    sendOtaCommand(0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+    @sysvar::ECU6Panel::OtaStart = 0;
+  }
+}
+
+on sysvar ECU6Panel::SendOtaChunk
+{
+  byte sequence;
+  byte auth;
+
+  if (@sysvar::ECU6Panel::SendOtaChunk != 0)
+  {
+    sequence = (byte)((panelSequence + 1) & 0xFF);
+    auth = calcOtaDataAuth(sequence, 0x04);
+    lastPayloadChecksum = lastPayloadChecksum ^ 0x11 ^ 0x22 ^ 0x33 ^ 0x44;
+    sendOtaCommand(0x02, 0x04, auth, 0x11, 0x22, 0x33, 0x44);
+    @sysvar::ECU6Panel::SendOtaChunk = 0;
+  }
+}
+
+on sysvar ECU6Panel::OtaEndCorrectCrc
+{
+  if (@sysvar::ECU6Panel::OtaEndCorrectCrc != 0)
+  {
+    sendOtaCommand(0x03, lastPayloadChecksum, 0x00, 0x00, 0x00, 0x00, 0x00);
+    @sysvar::ECU6Panel::OtaEndCorrectCrc = 0;
+  }
+}
+
+on sysvar ECU6Panel::OtaEndWrongCrc
+{
+  if (@sysvar::ECU6Panel::OtaEndWrongCrc != 0)
+  {
+    sendOtaCommand(0x03, (byte)(lastPayloadChecksum ^ 0xFF), 0x00, 0x00, 0x00, 0x00, 0x00);
+    @sysvar::ECU6Panel::OtaEndWrongCrc = 0;
+  }
+}
+
+on sysvar ECU6Panel::OtaActivate
+{
+  if (@sysvar::ECU6Panel::OtaActivate != 0)
+  {
+    sendOtaCommand(0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+    @sysvar::ECU6Panel::OtaActivate = 0;
+  }
+}
+
+on sysvar ECU6Panel::OtaAbort
+{
+  if (@sysvar::ECU6Panel::OtaAbort != 0)
+  {
+    sendOtaCommand(0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+    @sysvar::ECU6Panel::OtaAbort = 0;
+  }
+}
